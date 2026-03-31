@@ -1,0 +1,287 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mathsolving/features/View/AuthScreen/singin_screen.dart';
+import '../../../core/AppColor/app_color.dart';
+import '../../../core/AppImages/app_images.dart';
+import '../../../core/AppText/app_text.dart';
+import 'email_varification.dart';
+
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
+
+  @override
+  State<SignUpScreen> createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _retypePasswordController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureRetype = true;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _retypePasswordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.instance;
+    return Scaffold(
+      backgroundColor: colors.background,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 16.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Image.asset(AppImages.Toplogo, height: 56.h),
+                  CircleAvatar(
+                    radius: 20.r,
+                    backgroundColor: colors.primary500,
+                    child: Text(
+                      'S',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16.sp,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 28.h),
+              Text(
+                AppStrings.signup,
+                style: TextStyle(
+                  fontSize: 26.sp,
+                  fontWeight: FontWeight.w700,
+                  color: colors.titleTextColor,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              _buildTextField(
+                controller: _usernameController,
+                hint: AppStrings.username,
+                colors: colors,
+              ),
+              SizedBox(height: 12.h),
+              _buildTextField(
+                controller: _emailController,
+                hint: AppStrings.email,
+                colors: colors,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              SizedBox(height: 12.h),
+              _buildTextField(
+                controller: _passwordController,
+                hint: AppStrings.password,
+                colors: colors,
+                obscure: _obscurePassword,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    color: colors.hintTextColor,
+                    size: 20.sp,
+                  ),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              _buildTextField(
+                controller: _retypePasswordController,
+                hint: AppStrings.retypepassword,
+                colors: colors,
+                obscure: _obscureRetype,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureRetype ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    color: colors.hintTextColor,
+                    size: 20.sp,
+                  ),
+                  onPressed: () => setState(() => _obscureRetype = !_obscureRetype),
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
+                  child: Text(
+                    AppStrings.byclickingtext,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: colors.hintTextColor,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 20.h),
+              _buildPrimaryButton(
+                label: AppStrings.signup,
+                colors: colors,
+                onTap: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>EmailVerifiedScreen()));},
+              ),
+              SizedBox(height: 20.h),
+              _buildDivider(colors),
+              SizedBox(height: 16.h),
+              _buildSocialRow(colors),
+              SizedBox(height: 24.h),
+              _buildBottomText(
+                prefix: AppStrings.haveaccounttext,
+                action: AppStrings.singin,
+                colors: colors,
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context)=>SignInScreen()))
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required AppColors colors,
+    bool obscure = false,
+    Widget? suffixIcon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: keyboardType,
+      style: TextStyle(fontSize: 14.sp, color: colors.titleTextColor),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(fontSize: 14.sp, color: colors.hintTextColor),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: colors.softMintBackground,
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.r),
+          borderSide: BorderSide(color: colors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.r),
+          borderSide: BorderSide(color: colors.mainBtnColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrimaryButton({
+    required String label,
+    required AppColors colors,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50.h,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: colors.mainBtnColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25.r),
+          ),
+          elevation: 0,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.w600,
+            color: colors.btnTextColor,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDivider(AppColors colors) {
+    return Row(
+      children: [
+        Expanded(child: Divider(color: colors.border)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          child: Text(
+            'or',
+            style: TextStyle(fontSize: 13.sp, color: colors.hintTextColor),
+          ),
+        ),
+        Expanded(child: Divider(color: colors.border)),
+      ],
+    );
+  }
+
+  Widget _buildSocialRow(AppColors colors) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildSocialButton(AppImages.google, colors),
+        SizedBox(width: 16.w),
+        _buildSocialButton(AppImages.google, colors),
+      ],
+    );
+  }
+
+  Widget _buildSocialButton(String assetPath, AppColors colors) {
+    return Container(
+      width: 90.w,
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: colors.softMintBackground,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: colors.border),
+      ),
+      child: Center(
+        child: Image.asset(assetPath, height: 24.h),
+      ),
+    );
+  }
+
+  Widget _buildBottomText({
+    required String prefix,
+    required String action,
+    required AppColors colors,
+    required VoidCallback onTap,
+  }) {
+    return Center(
+      child: RichText(
+        text: TextSpan(
+          text: '$prefix ',
+          style: TextStyle(fontSize: 13.sp, color: colors.hintTextColor),
+          children: [
+            WidgetSpan(
+              child: GestureDetector(
+                onTap: onTap,
+                child: Text(
+                  action,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: colors.mainBtnColor,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
