@@ -1,33 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:get/get.dart';
 import '../../../core/AppColor/app_color.dart';
 import '../../../core/AppImages/app_images.dart';
 import '../../../core/AppText/app_text.dart';
+import '../../Controller/AuthController/auth_controller.dart';
 
 
-// ─────────────────────────────────────────────
-// FORGOT PASSWORD
-// ─────────────────────────────────────────────
-class ForgotPasswordScreen extends StatefulWidget {
+class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
-
-  @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
-}
-
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final _emailController = TextEditingController();
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.instance;
+    final controller = Get.find<AuthController>();
+
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
@@ -50,18 +37,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
               ),
               SizedBox(height: 20.h),
-              _buildTextField(
-                controller: _emailController,
-                hint: AppStrings.email,
-                colors: colors,
+              TextField(
+                controller: controller.emailController,
                 keyboardType: TextInputType.emailAddress,
+                style: TextStyle(fontSize: 14.sp, color: colors.titleTextColor),
+                decoration: InputDecoration(
+                  hintText: AppStrings.email,
+                  hintStyle:
+                  TextStyle(fontSize: 14.sp, color: colors.hintTextColor),
+                  filled: true,
+                  fillColor: colors.softMintBackground,
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w, vertical: 14.h),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                    borderSide: BorderSide(color: colors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                    borderSide: BorderSide(color: colors.mainBtnColor),
+                  ),
+                ),
               ),
               const Spacer(),
-              SizedBox(
+              Obx(() => SizedBox(
                 width: double.infinity,
                 height: 50.h,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.pushNamed(context, '/enter-otp'),
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : controller.sendForgotOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.mainBtnColor,
                     shape: RoundedRectangleBorder(
@@ -69,7 +74,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: Text(
+                  child: controller.isLoading.value
+                      ? SizedBox(
+                    width: 22.w,
+                    height: 22.h,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.btnTextColor,
+                    ),
+                  )
+                      : Text(
                     AppStrings.Sendotp,
                     style: TextStyle(
                       fontSize: 15.sp,
@@ -78,7 +92,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                   ),
                 ),
-              ),
+              )),
               SizedBox(height: 16.h),
             ],
           ),
@@ -86,35 +100,4 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ),
     );
   }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    required AppColors colors,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: TextStyle(fontSize: 14.sp, color: colors.titleTextColor),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(fontSize: 14.sp, color: colors.hintTextColor),
-        filled: true,
-        fillColor: colors.softMintBackground,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.r),
-          borderSide: BorderSide(color: colors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.r),
-          borderSide: BorderSide(color: colors.mainBtnColor),
-        ),
-      ),
-    );
-  }
 }
-
-
-

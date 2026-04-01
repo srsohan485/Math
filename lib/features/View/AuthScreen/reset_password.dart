@@ -1,35 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:get/get.dart';
 import '../../../core/AppColor/app_color.dart';
 import '../../../core/AppImages/app_images.dart';
 import '../../../core/AppText/app_text.dart';
-// ─────────────────────────────────────────────
-// RESET PASSWORD
-// ─────────────────────────────────────────────
-class ResetPasswordScreen extends StatefulWidget {
+import '../../Controller/AuthController/auth_controller.dart';
+
+
+class ResetPasswordScreen extends StatelessWidget {
   const ResetPasswordScreen({super.key});
-
-  @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
-}
-
-class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  final _passwordController = TextEditingController();
-  final _retypeController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureRetype = true;
-
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    _retypeController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.instance;
+    final controller = Get.find<AuthController>();
+
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
@@ -52,30 +37,29 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
               ),
               SizedBox(height: 20.h),
-              _buildTextField(
-                controller: _passwordController,
+              Obx(() => _buildTextField(
+                controller: controller.passwordController,
                 hint: AppStrings.password,
                 colors: colors,
-                obscure: _obscurePassword,
-                onToggle: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
-              ),
+                obscure: controller.isPasswordVisible.value,
+                onToggle: controller.togglePasswordVisibility,
+              )),
               SizedBox(height: 12.h),
-              _buildTextField(
-                controller: _retypeController,
+              Obx(() => _buildTextField(
+                controller: controller.retypePasswordController,
                 hint: AppStrings.retypepassword,
                 colors: colors,
-                obscure: _obscureRetype,
-                onToggle: () =>
-                    setState(() => _obscureRetype = !_obscureRetype),
-              ),
+                obscure: controller.isRetypePasswordVisible.value,
+                onToggle: controller.toggleRetypePasswordVisibility,
+              )),
               const Spacer(),
-              SizedBox(
+              Obx(() => SizedBox(
                 width: double.infinity,
                 height: 50.h,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                      context, '/sign-in', (route) => false),
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : controller.resetPassword,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.mainBtnColor,
                     shape: RoundedRectangleBorder(
@@ -83,7 +67,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: Text(
+                  child: controller.isLoading.value
+                      ? SizedBox(
+                    width: 22.w,
+                    height: 22.h,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.btnTextColor,
+                    ),
+                  )
+                      : Text(
                     'Confirm',
                     style: TextStyle(
                       fontSize: 15.sp,
@@ -92,7 +85,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                   ),
                 ),
-              ),
+              )),
               SizedBox(height: 16.h),
             ],
           ),

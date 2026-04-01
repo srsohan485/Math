@@ -1,31 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:get/get.dart';
 import '../../../core/AppColor/app_color.dart';
 import '../../../core/AppImages/app_images.dart';
 import '../../../core/AppText/app_text.dart';
+import '../../Controller/AuthController/auth_controller.dart';
+
+
 // ─────────────────────────────────────────────
-// ENTER OTP
+// ENTER OTP — shared screen for SignUp & Forgot Password flows
+// isSignUpFlow: true  → verifySignUpOtp (shows email verified overlay)
+// isSignUpFlow: false → verifyForgotOtp (navigates to ResetPassword)
 // ─────────────────────────────────────────────
-class EnterOtpScreen extends StatefulWidget {
-  const EnterOtpScreen({super.key});
+class EnterOtpScreen extends StatelessWidget {
+  final bool isSignUpFlow;
 
-  @override
-  State<EnterOtpScreen> createState() => _EnterOtpScreenState();
-}
-
-class _EnterOtpScreenState extends State<EnterOtpScreen> {
-  final _otpController = TextEditingController();
-
-  @override
-  void dispose() {
-    _otpController.dispose();
-    super.dispose();
-  }
+  const EnterOtpScreen({super.key, required this.isSignUpFlow});
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.instance;
+    final colors     = AppColors.instance;
+    final controller = Get.find<AuthController>();
+
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
@@ -47,9 +43,16 @@ class _EnterOtpScreenState extends State<EnterOtpScreen> {
                   color: colors.titleTextColor,
                 ),
               ),
+              SizedBox(height: 8.h),
+              Text(
+                isSignUpFlow
+                    ? "We sent a code to verify your email address."
+                    : "We sent a code to reset your password.",
+                style: TextStyle(fontSize: 13.sp, color: colors.hintTextColor),
+              ),
               SizedBox(height: 20.h),
               TextField(
-                controller: _otpController,
+                controller: controller.otpController,
                 keyboardType: TextInputType.number,
                 maxLength: 6,
                 style: TextStyle(
@@ -80,14 +83,17 @@ class _EnterOtpScreenState extends State<EnterOtpScreen> {
                 ),
               ),
               SizedBox(height: 16.h),
-              _buildVerificationText(colors),
+              _buildResendRow(colors, controller),
               const Spacer(),
-              SizedBox(
+              Obx(() => SizedBox(
                 width: double.infinity,
                 height: 50.h,
                 child: ElevatedButton(
-                  onPressed: () =>
-                      Navigator.pushNamed(context, '/reset-password'),
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : () => isSignUpFlow
+                      ? controller.verifySignUpOtp(context)
+                      : controller.verifyForgotOtp(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.mainBtnColor,
                     shape: RoundedRectangleBorder(
@@ -95,7 +101,16 @@ class _EnterOtpScreenState extends State<EnterOtpScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: Text(
+                  child: controller.isLoading.value
+                      ? SizedBox(
+                    width: 22.w,
+                    height: 22.h,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.btnTextColor,
+                    ),
+                  )
+                      : Text(
                     AppStrings.Submit,
                     style: TextStyle(
                       fontSize: 15.sp,
@@ -104,7 +119,7 @@ class _EnterOtpScreenState extends State<EnterOtpScreen> {
                     ),
                   ),
                 ),
-              ),
+              )),
               SizedBox(height: 16.h),
             ],
           ),
@@ -113,39 +128,47 @@ class _EnterOtpScreenState extends State<EnterOtpScreen> {
     );
   }
 
-  Widget _buildVerificationText(AppColors colors) {
-    // "We sent a verification code to your email. Please check.
-    //  If not, resend in 0:22 minutes. Resend"
-    return RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        style: TextStyle(fontSize: 12.sp, color: colors.hintTextColor, height: 1.5),
-        children: [
-          const TextSpan(
+  Widget _buildResendRow(AppColors colors, AuthController controller) {
+    return Obx(() {
+      final secs    = controller.seconds.value;
+      final canSend = controller.canResend.value;
+
+      return RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          style: TextStyle(
+              fontSize: 12.sp, color: colors.hintTextColor, height: 1.5),
+          children: [
+            const TextSpan(
               text:
-              'We sent a verification code to your email. Please check. If not, resend in '),
-          TextSpan(
-            text: '0:22',
-            style: TextStyle(
-                fontWeight: FontWeight.w600, color: colors.titleTextColor),
-          ),
-          const TextSpan(text: ' minutes. '),
-          WidgetSpan(
-            child: GestureDetector(
-              onTap: () {},
-              child: Text(
-                'Resend',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w700,
-                  color: colors.mainBtnColor,
-                  decoration: TextDecoration.underline,
+              'We sent a verification code to your email. Please check. If not, resend in ',
+            ),
+            TextSpan(
+              text: '0:${secs.toString().padLeft(2, '0')}',
+              style: TextStyle(
+                  fontWeight: FontWeight.w600, color: colors.titleTextColor),
+            ),
+            const TextSpan(text: ' minutes. '),
+            WidgetSpan(
+              child: GestureDetector(
+                onTap: canSend ? controller.resendOtp : null,
+                child: Text(
+                  'Resend',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    color:
+                    canSend ? colors.mainBtnColor : colors.hintTextColor,
+                    decoration: canSend
+                        ? TextDecoration.underline
+                        : TextDecoration.none,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }

@@ -1,33 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:mathsolving/features/View/AuthScreen/singup_srceen.dart';
+import 'package:get/get.dart';
 import '../../../core/AppColor/app_color.dart';
 import '../../../core/AppImages/app_images.dart';
 import '../../../core/AppText/app_text.dart';
+import '../../Controller/AuthController/auth_controller.dart';
 
 
-class SignInScreen extends StatefulWidget {
+class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
-
-  @override
-  State<SignInScreen> createState() => _SignInScreenState();
-}
-
-class _SignInScreenState extends State<SignInScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.instance;
+    final controller = Get.find<AuthController>();
+
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
@@ -38,10 +25,7 @@ class _SignInScreenState extends State<SignInScreen> {
             children: [
               SizedBox(height: 16.h),
               Center(
-                child: Image.asset(
-                  AppImages.Toplogo,
-                  height: 56.h,
-                ),
+                child: Image.asset(AppImages.Toplogo, height: 56.h),
               ),
               SizedBox(height: 28.h),
               Text(
@@ -54,32 +38,32 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
               SizedBox(height: 20.h),
               _buildTextField(
-                controller: _emailController,
+                controller: controller.emailController,
                 hint: AppStrings.email,
                 colors: colors,
               ),
               SizedBox(height: 12.h),
-              _buildTextField(
-                controller: _passwordController,
+              Obx(() => _buildTextField(
+                controller: controller.passwordController,
                 hint: AppStrings.password,
                 colors: colors,
-                obscure: _obscurePassword,
+                obscure: controller.isPasswordVisible.value,
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    controller.isPasswordVisible.value
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                     color: colors.hintTextColor,
                     size: 20.sp,
                   ),
-                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  onPressed: controller.togglePasswordVisibility,
                 ),
-              ),
+              )),
               SizedBox(height: 10.h),
               Align(
                 alignment: Alignment.centerRight,
                 child: GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, '/forgot-password');
-                  },
+                  onTap: controller.goToForgotPassword,
                   child: Text(
                     AppStrings.forgotpassword,
                     style: TextStyle(
@@ -90,11 +74,12 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
               SizedBox(height: 32.h),
-              _buildPrimaryButton(
+              Obx(() => _buildPrimaryButton(
                 label: AppStrings.singin,
                 colors: colors,
-                onTap: () {},
-              ),
+                isLoading: controller.isLoading.value,
+                onTap: controller.isLoading.value ? null : controller.login,
+              )),
               SizedBox(height: 20.h),
               _buildDivider(colors),
               SizedBox(height: 16.h),
@@ -104,7 +89,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 prefix: AppStrings.dontaccounttext,
                 action: AppStrings.signup,
                 colors: colors,
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context)=>SignUpScreen()))
+                onTap: controller.goToSignUp,
               ),
             ],
           ),
@@ -146,7 +131,8 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget _buildPrimaryButton({
     required String label,
     required AppColors colors,
-    required VoidCallback onTap,
+    required bool isLoading,
+    required VoidCallback? onTap,
   }) {
     return SizedBox(
       width: double.infinity,
@@ -160,7 +146,16 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
           elevation: 0,
         ),
-        child: Text(
+        child: isLoading
+            ? SizedBox(
+          width: 22.w,
+          height: 22.h,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: colors.btnTextColor,
+          ),
+        )
+            : Text(
           label,
           style: TextStyle(
             fontSize: 15.sp,

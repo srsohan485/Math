@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import '../../../core/AppColor/app_color.dart';
 import '../../../core/AppText/app_text.dart';
 
+import '../MainScreen/chart_screen.dart';
 
 class EmailVerifiedScreen extends StatelessWidget {
   const EmailVerifiedScreen({super.key});
@@ -10,6 +12,7 @@ class EmailVerifiedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.instance;
+
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
@@ -20,7 +23,6 @@ class EmailVerifiedScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Spacer(),
-              // Blue check circle
               Container(
                 width: 72.w,
                 height: 72.w,
@@ -44,9 +46,9 @@ class EmailVerifiedScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 16.h),
-              // Email chip
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                padding:
+                EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
                 decoration: BoxDecoration(
                   color: colors.textFilledBackground,
                   borderRadius: BorderRadius.circular(20.r),
@@ -54,7 +56,8 @@ class EmailVerifiedScreen extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle_outline, color: colors.loginBtnColor, size: 16.sp),
+                    Icon(Icons.check_circle_outline,
+                        color: colors.loginBtnColor, size: 16.sp),
                     SizedBox(width: 6.w),
                     Text(
                       AppStrings.verifiedemail,
@@ -82,7 +85,7 @@ class EmailVerifiedScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 50.h,
                 child: ElevatedButton(
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context)=>EmailVerifiedScreen())),
+                  onPressed: () => Get.off(() => MainChatScreen()),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.mainBtnColor,
                     shape: RoundedRectangleBorder(

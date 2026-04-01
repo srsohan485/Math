@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mathsolving/features/View/SplashScreen/splash_screen2.dart';
 import '../../../core/AppImages/app_images.dart';
+import '../../../core/storege/storage_service.dart';
+import '../MainScreen/chart_screen.dart';
 
 
 
@@ -22,10 +24,17 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(seconds: 4), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const SplashScreen2()),
-      );
+      if (StorageService.hasToken) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => MainChatScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const SplashScreen2()),
+        );
+      }
     });
   }
 

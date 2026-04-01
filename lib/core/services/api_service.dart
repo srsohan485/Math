@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'app_log.dart';
 
@@ -54,6 +55,63 @@ class ApiServices {
     final streamedResponse = await _httpClient.send(request);
     final response = await http.Response.fromStream(streamedResponse);
     return _handleResponse(response, url, endpoints);
+  }
+
+
+
+
+  Future<dynamic> postMultipart({
+    required String endpoint,
+    required Map<String, String> headers,
+    required Map<String, String> fields,
+    File? file,
+    String fileField = "image",
+    File? audioFile,
+    String audioField = "audio",
+  }) async {
+    final uri = Uri.parse(baseUrl + endpoint);
+
+    // ─── Log Request ─────────────────────────────────
+    AppLog.request(
+      endpoint,
+      method: 'POST [multipart]',
+      body: {
+        "fields": fields,
+        "hasImage": file != null,
+        "hasAudio": audioFile != null,
+      },
+    );
+
+    final request = http.MultipartRequest("POST", uri);
+    request.headers.addAll(headers);
+    request.fields.addAll(fields);
+
+    // Image
+    if (file != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(fileField, file.path),
+      );
+    }
+
+    // Audio
+    if (audioFile != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(audioField, audioFile.path),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    final decoded = jsonDecode(response.body);
+
+    // ─── Log Response ─────────────────────────────────
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      AppLog.response(endpoint, decoded);
+    } else {
+      AppLog.error(endpoint, response.body, statusCode: response.statusCode);
+    }
+
+    return decoded;
   }
 
   dynamic _handleResponse(http.Response response, Uri url, String endpoint) {

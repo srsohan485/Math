@@ -38,11 +38,17 @@ dependencies:
   get_storage: ^2.1.1
   google_fonts: ^8.0.1
   http: ^1.6.0
+  record: ^6.2.0
+  flutter_sound: ^9.2.13
+  file_picker: ^8.0.0
   flutter_screenutil: ^5.9.3
+  shared_preferences: ^2.5.5
   image_picker: ^1.0.7
   image: ^4.7.2
   flutter_launcher_icons: ^0.14.4
   permission_handler: ^12.0.1
+  just_audio: ^0.9.38
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,8 @@ import 'package:mathsolving/core/AppColor/app_color.dart';
 import 'package:mathsolving/core/AppImages/app_images.dart';
 import 'package:mathsolving/core/AppText/app_text.dart';
 
+import '../AuthScreen/singin_screen.dart';
+
 class SelectLanguageScreen extends StatefulWidget {
   const SelectLanguageScreen({super.key});
 
@@ -196,6 +198,7 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
                 height: 54.h,
                 child: ElevatedButton(
                   onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=>SignInScreen()));
                     // Handle confirm action
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -218,7 +221,7 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
-                      color: AppColors.instance.textColor
+                      color: AppColors.instance.baseColor
                     ),
                   ),
                 ),

@@ -1,38 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:mathsolving/features/View/AuthScreen/singin_screen.dart';
+import 'package:get/get.dart';
 import '../../../core/AppColor/app_color.dart';
 import '../../../core/AppImages/app_images.dart';
 import '../../../core/AppText/app_text.dart';
-import 'email_varification.dart';
+import '../../Controller/AuthController/auth_controller.dart';
 
-class SignUpScreen extends StatefulWidget {
+
+class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
-
-  @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
-}
-
-class _SignUpScreenState extends State<SignUpScreen> {
-  final _usernameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _retypePasswordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureRetype = true;
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _retypePasswordController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.instance;
+    final controller = Get.find<AuthController>();
+
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
@@ -71,47 +53,51 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               SizedBox(height: 20.h),
               _buildTextField(
-                controller: _usernameController,
+                controller: controller.usernameController,
                 hint: AppStrings.username,
                 colors: colors,
               ),
               SizedBox(height: 12.h),
               _buildTextField(
-                controller: _emailController,
+                controller: controller.emailController,
                 hint: AppStrings.email,
                 colors: colors,
                 keyboardType: TextInputType.emailAddress,
               ),
               SizedBox(height: 12.h),
-              _buildTextField(
-                controller: _passwordController,
+              Obx(() => _buildTextField(
+                controller: controller.passwordController,
                 hint: AppStrings.password,
                 colors: colors,
-                obscure: _obscurePassword,
+                obscure: controller.isPasswordVisible.value,
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    controller.isPasswordVisible.value
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                     color: colors.hintTextColor,
                     size: 20.sp,
                   ),
-                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  onPressed: controller.togglePasswordVisibility,
                 ),
-              ),
+              )),
               SizedBox(height: 12.h),
-              _buildTextField(
-                controller: _retypePasswordController,
+              Obx(() => _buildTextField(
+                controller: controller.confirmPasswordController,
                 hint: AppStrings.retypepassword,
                 colors: colors,
-                obscure: _obscureRetype,
+                obscure: controller.isConfirmPasswordVisible.value,
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscureRetype ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    controller.isConfirmPasswordVisible.value
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                     color: colors.hintTextColor,
                     size: 20.sp,
                   ),
-                  onPressed: () => setState(() => _obscureRetype = !_obscureRetype),
+                  onPressed: controller.toggleConfirmPasswordVisibility,
                 ),
-              ),
+              )),
               SizedBox(height: 20.h),
               Center(
                 child: Padding(
@@ -128,11 +114,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
               SizedBox(height: 20.h),
-              _buildPrimaryButton(
+              Obx(() => _buildPrimaryButton(
                 label: AppStrings.signup,
                 colors: colors,
-                onTap: () {Navigator.push(context, MaterialPageRoute(builder: (context)=>EmailVerifiedScreen()));},
-              ),
+                isLoading: controller.isLoading.value,
+                onTap: controller.isLoading.value ? null : controller.signUp,
+              )),
               SizedBox(height: 20.h),
               _buildDivider(colors),
               SizedBox(height: 16.h),
@@ -142,7 +129,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 prefix: AppStrings.haveaccounttext,
                 action: AppStrings.singin,
                 colors: colors,
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context)=>SignInScreen()))
+                onTap: controller.goToSignIn,
               ),
             ],
           ),
@@ -186,7 +173,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget _buildPrimaryButton({
     required String label,
     required AppColors colors,
-    required VoidCallback onTap,
+    required bool isLoading,
+    required VoidCallback? onTap,
   }) {
     return SizedBox(
       width: double.infinity,
@@ -200,7 +188,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
           elevation: 0,
         ),
-        child: Text(
+        child: isLoading
+            ? SizedBox(
+          width: 22.w,
+          height: 22.h,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: colors.btnTextColor,
+          ),
+        )
+            : Text(
           label,
           style: TextStyle(
             fontSize: 15.sp,
