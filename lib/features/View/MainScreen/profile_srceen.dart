@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:mathsolving/features/View/MainScreen/termscondition_screen.dart';
-
+import 'package:get/get.dart';
 import '../../../core/AppColor/app_color.dart';
 import '../../../core/AppImages/app_images.dart';
 import '../../../core/AppText/app_text.dart';
+import '../../Controller/ProfileController/profile_controller.dart';
+import '../MainScreen/termscondition_screen.dart';
 
-
-// ═══════════════════════════════════════════════════
-//  PROFILE SCREEN
-// ═══════════════════════════════════════════════════
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Get.find — controller must be registered in binding or before this screen
+    final controller = Get.put(ProfileController());
     final c = AppColors.instance;
 
     return Scaffold(
@@ -37,95 +36,118 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: Column(
-        children: [
-          SizedBox(height: 16.h),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return Center(
+            child: CircularProgressIndicator(color: c.mainBtnColor),
+          );
+        }
 
-          // ── User card ───────────────────────────────
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w),
-            child: Row(
-              children: [
-                // Avatar
-                CircleAvatar(
-                  radius: 26.r,
-                  backgroundImage: AssetImage(AppImages.Centerlogo2),
-                  backgroundColor: c.border,
-                ),
-                SizedBox(width: 12.w),
+        return Column(
+          children: [
+            SizedBox(height: 16.h),
 
-                // Name + email
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppStrings.name,
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                          color: c.titleTextColor,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        'nusratJahan@gmail.com',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: c.hintTextColor,
-                        ),
-                      ),
-                    ],
+            // ── User card ──────────────────────────────────
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Row(
+                children: [
+                  // Avatar
+                  CircleAvatar(
+                    radius: 26.r,
+                    backgroundImage:
+                    controller.profilePicture.value.isNotEmpty
+                        ? NetworkImage(controller.profilePicture.value)
+                    as ImageProvider
+                        : AssetImage(AppImages.Centerlogo2),
+                    backgroundColor: c.border,
                   ),
-                ),
+                  SizedBox(width: 12.w),
 
-                // 3-dot menu
-                _ThreeDotMenu(colors: c),
-              ],
-            ),
-          ),
+                  // ✅ FIX: use controller.username.value, NOT AppStrings.name
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Obx(() => Text(
+                          controller.username.value.isNotEmpty
+                              ? controller.username.value
+                              : AppStrings.name,
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: c.titleTextColor,
+                          ),
+                        )),
+                        SizedBox(height: 2.h),
+                        Obx(() => Text(
+                          controller.email.value.isNotEmpty
+                              ? controller.email.value
+                              : '',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: c.hintTextColor,
+                          ),
+                        )),
+                      ],
+                    ),
+                  ),
 
-          SizedBox(height: 20.h),
-          Divider(color: c.border, thickness: 1, height: 1),
-
-          // ── Menu items ──────────────────────────────
-          _ProfileMenuItem(
-            icon: Icons.shield_outlined,
-            label: AppStrings.termsconditiontext,
-            colors: c,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const TermsAndPrivacyScreen(),
+                  // 3-dot menu
+                  _ThreeDotMenu(colors: c, controller: controller),
+                ],
               ),
             ),
-            showArrow: true,
-          ),
 
-          Divider(color: c.border, thickness: 1, height: 1,
-              indent: 20.w, endIndent: 20.w),
+            SizedBox(height: 20.h),
+            Divider(color: c.border, thickness: 1, height: 1),
 
-          _ProfileMenuItem(
-            icon: Icons.logout_rounded,
-            label: AppStrings.Logout,
-            colors: c,
-            onTap: () => _showLogoutDialog(context, c),
-            showArrow: false,
-          ),
-        ],
-      ),
+            // ── Menu items ────────────────────────────────
+            _ProfileMenuItem(
+              icon: Icons.shield_outlined,
+              label: AppStrings.termsconditiontext,
+              colors: c,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const TermsAndPrivacyScreen(),
+                ),
+              ),
+              showArrow: true,
+            ),
+
+            Divider(
+                color: c.border,
+                thickness: 1,
+                height: 1,
+                indent: 20.w,
+                endIndent: 20.w),
+
+            Obx(() => _ProfileMenuItem(
+              icon: Icons.logout_rounded,
+              label: AppStrings.Logout,
+              colors: c,
+              onTap: () => _showLogoutDialog(context, c, controller),
+              showArrow: false,
+              isLoading: controller.isLoggingOut.value,
+            )),
+          ],
+        );
+      }),
     );
   }
 
-  void _showLogoutDialog(BuildContext context, AppColors c) {
+  void _showLogoutDialog(
+      BuildContext context, AppColors c, ProfileController controller) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.r)),
-        title: Text('Log out',
+        title: Text(AppStrings.Logout,
             style: TextStyle(
-                fontSize: 16.sp, fontWeight: FontWeight.w700,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w700,
                 color: c.titleTextColor)),
         content: Text('Are you sure you want to log out?',
             style: TextStyle(fontSize: 13.sp, color: c.hintTextColor)),
@@ -135,28 +157,38 @@ class ProfileScreen extends StatelessWidget {
             child: Text('Cancel',
                 style: TextStyle(color: c.hintTextColor, fontSize: 13.sp)),
           ),
-          TextButton(
-            onPressed: () {
+          Obx(() => TextButton(
+            onPressed: controller.isLoggingOut.value
+                ? null
+                : () {
               Navigator.pop(context);
-              Navigator.pushNamedAndRemoveUntil(
-                  context, '/sign-in', (r) => false);
+              controller.logout(context);
             },
-            child: Text('Log out',
+            child: controller.isLoggingOut.value
+                ? SizedBox(
+              width: 16.w,
+              height: 16.w,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: c.error),
+            )
+                : Text(AppStrings.Logout,
                 style: TextStyle(
                     color: c.error,
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600)),
-          ),
+          )),
         ],
       ),
     );
   }
 }
 
-// ── 3-dot popup menu ────────────────────────────────────
+// ── 3-dot popup menu ──────────────────────────────────────
 class _ThreeDotMenu extends StatelessWidget {
   final AppColors colors;
-  const _ThreeDotMenu({required this.colors});
+  final ProfileController controller;
+
+  const _ThreeDotMenu({required this.colors, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -169,9 +201,9 @@ class _ThreeDotMenu extends StatelessWidget {
       elevation: 4,
       onSelected: (value) {
         if (value == 'edit') {
-          _showEditDialog(context, colors);
+          _showEditDialog(context);
         } else if (value == 'delete') {
-          _showDeleteDialog(context, colors);
+          _showDeleteDialog(context);
         }
       },
       itemBuilder: (_) => [
@@ -196,8 +228,7 @@ class _ThreeDotMenu extends StatelessWidget {
                   size: 18.sp, color: colors.error),
               SizedBox(width: 8.w),
               Text(AppStrings.deletetext,
-                  style: TextStyle(
-                      fontSize: 14.sp, color: colors.error)),
+                  style: TextStyle(fontSize: 14.sp, color: colors.error)),
             ],
           ),
         ),
@@ -205,8 +236,10 @@ class _ThreeDotMenu extends StatelessWidget {
     );
   }
 
-  void _showEditDialog(BuildContext context, AppColors c) {
-    final ctrl = TextEditingController(text: AppStrings.name1);
+  void _showEditDialog(BuildContext context) {
+    // ✅ Pre-fill with current username from controller
+    final ctrl = TextEditingController(text: controller.username.value);
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -216,13 +249,14 @@ class _ThreeDotMenu extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(children: [
-              Icon(Icons.edit_outlined, size: 18.sp, color: c.titleTextColor),
+              Icon(Icons.edit_outlined,
+                  size: 18.sp, color: colors.titleTextColor),
               SizedBox(width: 6.w),
               Text(AppStrings.edit,
                   style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
-                      color: c.titleTextColor)),
+                      color: colors.titleTextColor)),
             ]),
             GestureDetector(
               onTap: () => Navigator.pop(context),
@@ -230,49 +264,59 @@ class _ThreeDotMenu extends StatelessWidget {
                 width: 24.w,
                 height: 24.w,
                 decoration: BoxDecoration(
-                    color: c.hintTextColor,
-                    shape: BoxShape.circle),
-                child: Icon(Icons.close_rounded,
-                    color: Colors.white, size: 14.sp),
+                    color: colors.hintTextColor, shape: BoxShape.circle),
+                child:
+                Icon(Icons.close_rounded, color: Colors.white, size: 14.sp),
               ),
             ),
           ],
         ),
         content: TextField(
           controller: ctrl,
-          style: TextStyle(fontSize: 14.sp, color: c.titleTextColor),
+          style: TextStyle(fontSize: 14.sp, color: colors.titleTextColor),
           decoration: InputDecoration(
-            hintText: 'Name',
-            hintStyle: TextStyle(color: c.hintTextColor, fontSize: 14.sp),
+            hintText: 'Enter new username',
+            hintStyle:
+            TextStyle(color: colors.hintTextColor, fontSize: 14.sp),
             enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: c.border)),
+                borderSide: BorderSide(color: colors.border)),
             focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: c.mainBtnColor)),
+                borderSide: BorderSide(color: colors.mainBtnColor)),
           ),
         ),
         actions: [
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+            child: Obx(() => ElevatedButton(
+              // ✅ calls controller.updateUsername — handles API + storage + Obx rebuild
+              onPressed: controller.isUpdating.value
+                  ? null
+                  : () => controller.updateUsername(ctrl.text),
               style: ElevatedButton.styleFrom(
-                backgroundColor: c.mainBtnColor,
+                backgroundColor: colors.mainBtnColor,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r)),
               ),
-              child: Text('Save',
+              child: controller.isUpdating.value
+                  ? SizedBox(
+                height: 18.h,
+                width: 18.h,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: colors.btnTextColor),
+              )
+                  : Text('Save',
                   style: TextStyle(
                       fontSize: 14.sp,
-                      color: c.btnTextColor,
+                      color: colors.btnTextColor,
                       fontWeight: FontWeight.w600)),
-            ),
+            )),
           ),
         ],
       ),
     );
   }
 
-  void _showDeleteDialog(BuildContext context, AppColors c) {
+  void _showDeleteDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -282,37 +326,51 @@ class _ThreeDotMenu extends StatelessWidget {
             style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
-                color: c.titleTextColor)),
+                color: colors.titleTextColor)),
         content: Text(
             'Are you sure you want to delete your account? This action cannot be undone.',
-            style: TextStyle(fontSize: 13.sp, color: c.hintTextColor)),
+            style: TextStyle(fontSize: 13.sp, color: colors.hintTextColor)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('Cancel',
-                style: TextStyle(color: c.hintTextColor, fontSize: 13.sp)),
+                style:
+                TextStyle(color: colors.hintTextColor, fontSize: 13.sp)),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Delete',
+          Obx(() => TextButton(
+            onPressed: controller.isDeleting.value
+                ? null
+                : () {
+              Navigator.pop(context);
+              controller.deleteAccount(context);
+            },
+            child: controller.isDeleting.value
+                ? SizedBox(
+              width: 16.w,
+              height: 16.w,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: colors.error),
+            )
+                : Text('Delete',
                 style: TextStyle(
-                    color: c.error,
+                    color: colors.error,
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600)),
-          ),
+          )),
         ],
       ),
     );
   }
 }
 
-// ── Profile menu row ─────────────────────────────────────
+// ── Profile menu row ───────────────────────────────────────
 class _ProfileMenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final AppColors colors;
   final VoidCallback onTap;
   final bool showArrow;
+  final bool isLoading;
 
   const _ProfileMenuItem({
     required this.icon,
@@ -320,12 +378,13 @@ class _ProfileMenuItem extends StatelessWidget {
     required this.colors,
     required this.onTap,
     required this.showArrow,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
         child: Row(
@@ -333,16 +392,21 @@ class _ProfileMenuItem extends StatelessWidget {
             Icon(icon, size: 22.sp, color: colors.titleTextColor),
             SizedBox(width: 14.w),
             Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: colors.titleTextColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              child: Text(label,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: colors.titleTextColor,
+                    fontWeight: FontWeight.w500,
+                  )),
             ),
-            if (showArrow)
+            if (isLoading)
+              SizedBox(
+                width: 16.w,
+                height: 16.w,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: colors.hintTextColor),
+              )
+            else if (showArrow)
               Icon(Icons.arrow_forward_ios_rounded,
                   size: 16.sp, color: colors.hintTextColor),
           ],
@@ -351,4 +415,3 @@ class _ProfileMenuItem extends StatelessWidget {
     );
   }
 }
-

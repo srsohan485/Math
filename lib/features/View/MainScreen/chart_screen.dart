@@ -4,11 +4,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:mathsolving/features/View/MainScreen/profile_srceen.dart';
+import 'package:mathsolving/features/View/MainScreen/termscondition_screen.dart';
 import '../../../core/AppColor/app_color.dart';
 import '../../../core/AppImages/app_images.dart';
 import '../../../core/AppText/app_text.dart';
 import '../../Controller/ChatController/chat_controller.dart';
 import '../../Model/ChetModel/chat_model.dart';
+import '../AuthScreen/singin_screen.dart';
 import '../AuthScreen/singup_srceen.dart';
 
 class MainChatScreen extends StatelessWidget {
@@ -63,69 +66,109 @@ class MainChatScreen extends StatelessWidget {
 
   // ── DRAWER ───────────────────────────────────────────
   Widget _buildDrawer(AppColors colors, ChatController controller) {
-    return Drawer(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 50.h),
-            Icon(Icons.menu, size: 28.sp),
-            SizedBox(height: 30.h),
-            // New Chat
-            GestureDetector(
-              onTap: () {
-                Get.back(); // close drawer
-                controller.messages.clear();
-                controller.onInit(); // create fresh session
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xff2F3E5B),
-                  borderRadius: BorderRadius.circular(10.r),
+    return Builder(
+      builder: (context) => Drawer(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 50.h),
+              Icon(Icons.menu, size: 28.sp),
+              SizedBox(height: 30.h),
+
+              // New Chat
+              GestureDetector(
+                onTap: () {
+                  Get.back();
+                  controller.messages.clear();
+                  controller.onInit();
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff2F3E5B),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.edit, color: Colors.white, size: 18.sp),
+                      SizedBox(width: 8.w),
+                      Text(
+                        AppStrings.newtext,
+                        style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.edit, color: Colors.white, size: 18.sp),
-                    SizedBox(width: 8.w),
-                    Text(
-                      "New chat",
-                      style: TextStyle(color: Colors.white, fontSize: 14.sp),
-                    ),
-                  ],
+              ),
+
+              SizedBox(height: 30.h),
+
+              /// ✅ Profile
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => ProfileScreen()),
+                  );
+                },
+                child: Text(
+                  AppStrings.profile,
+                  style: TextStyle(fontSize: 16.sp),
                 ),
               ),
-            ),
-            SizedBox(height: 30.h),
-            Text("Profile",               style: TextStyle(fontSize: 16.sp)),
-            SizedBox(height: 20.h),
-            Text("Terms and privacy policy", style: TextStyle(fontSize: 16.sp)),
-            SizedBox(height: 20.h),
-            const Divider(),
-            SizedBox(height: 10.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("History", style: TextStyle(fontSize: 16.sp)),
-                const Icon(Icons.keyboard_arrow_down),
-              ],
-            ),
-            const Spacer(),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-              decoration: BoxDecoration(
-                color: const Color(0xff2F3E5B),
-                borderRadius: BorderRadius.circular(10.r),
+
+              SizedBox(height: 20.h),
+
+              /// ✅ Terms & Condition
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => TermsAndPrivacyScreen()),
+                  );
+                },
+                child: Text(
+                  AppStrings.termsconditiontext,
+                  style: TextStyle(fontSize: 16.sp),
+                ),
               ),
-              child: Text(
-                "Log out",
-                style: TextStyle(color: Colors.white, fontSize: 14.sp),
+
+              SizedBox(height: 20.h),
+              const Divider(),
+              SizedBox(height: 10.h),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(AppStrings.history, style: TextStyle(fontSize: 16.sp)),
+                  const Icon(Icons.keyboard_arrow_down),
+                ],
               ),
-            ),
-            SizedBox(height: 30.h),
-          ],
+
+              const Spacer(),
+
+              /// ✅ Logout Button
+              GestureDetector(
+                onTap: () {
+                  Get.offAll(() => SignInScreen());
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff2F3E5B),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Text(
+                    AppStrings.Logout,
+                    style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 30.h),
+            ],
+          ),
         ),
       ),
     );

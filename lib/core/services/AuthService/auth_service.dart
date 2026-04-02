@@ -5,12 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../features/View/AuthScreen/singin_screen.dart';
 import '../../storege/storage_service.dart';
+import '../app_log.dart'; // AppLog import
 
 class AuthService {
-
-  static const String baseUrl = "https://mathapi.dsrt321.online"; // Change according to your server
-
-
+  static const String baseUrl = "https://mathapi.dsrt321.online";
 
   /// ===========================
   /// LOGIN USER
@@ -19,29 +17,28 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    var url = Uri.parse("$baseUrl/api/users/login/");
+    const endpoint = "/api/users/login/";
+    final body = {"email": email, "password": password};
 
+    AppLog.request(endpoint, body: body);
+
+    var url = Uri.parse("$baseUrl$endpoint");
     var response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": email,
-        "password": password,
-      }),
+      body: jsonEncode(body),
     );
 
     var data = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      // Access token save করুন
+      AppLog.response(endpoint, data);
       await StorageService.saveToken(data["tokens"]["access"]);
-
-      // Refresh token ও save করুন
       await StorageService.saveRefreshToken(data["tokens"]["refresh"]);
-
       return {"success": true, "data": data};
     }
 
+    AppLog.error(endpoint, data, statusCode: response.statusCode);
     return {"success": false, "data": data};
   }
 
@@ -54,20 +51,30 @@ class AuthService {
     required String password,
     required String confirmPassword,
   }) async {
-    var url = Uri.parse("$baseUrl/api/users/register/");
+    const endpoint = "/api/users/register/";
+    final body = {
+      "username": username,
+      "email": email,
+      "password": password,
+      "password_confirm": confirmPassword,
+    };
 
+    AppLog.request(endpoint, body: body);
+
+    var url = Uri.parse("$baseUrl$endpoint");
     var response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "username": username,
-        "email": email,
-        "password": password,
-        "password_confirm": confirmPassword,
-      }),
+      body: jsonEncode(body),
     );
 
     var data = jsonDecode(response.body);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      AppLog.response(endpoint, data);
+    } else {
+      AppLog.error(endpoint, data, statusCode: response.statusCode);
+    }
 
     return {
       "status": response.statusCode,
@@ -81,44 +88,25 @@ class AuthService {
   Future<Map<String, dynamic>> resendOtp({
     required String email,
   }) async {
-    final url = Uri.parse("$baseUrl/api/users/resend-otp/");
+    const endpoint = "/api/users/resend-otp/";
+    final body = {"email": email};
 
+    AppLog.request(endpoint, body: body);
+
+    final url = Uri.parse("$baseUrl$endpoint");
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": email,
-      }),
-    );
-
-    print(response.statusCode);
-    print(response.body);
-
-
-    return {
-      "status": response.statusCode,
-      "data": jsonDecode(response.body),
-    };
-  }
-
-  /// ===========================
-  /// FORGOT PASSWORD (SEND OTP)sa
-  /// ===========================
-  Future<Map<String, dynamic>> forgotPassword({
-    required String email,
-  }) async {
-
-    final url = Uri.parse("$baseUrl/api/users/password-reset/");
-
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": email,
-      }),
+      body: jsonEncode(body),
     );
 
     final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      AppLog.response(endpoint, data);
+    } else {
+      AppLog.error(endpoint, data, statusCode: response.statusCode);
+    }
 
     return {
       "status": response.statusCode,
@@ -126,7 +114,37 @@ class AuthService {
     };
   }
 
+  /// ===========================
+  /// FORGOT PASSWORD (SEND OTP)
+  /// ===========================
+  Future<Map<String, dynamic>> forgotPassword({
+    required String email,
+  }) async {
+    const endpoint = "/api/users/password-reset/";
+    final body = {"email": email};
 
+    AppLog.request(endpoint, body: body);
+
+    final url = Uri.parse("$baseUrl$endpoint");
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(body),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      AppLog.response(endpoint, data);
+    } else {
+      AppLog.error(endpoint, data, statusCode: response.statusCode);
+    }
+
+    return {
+      "status": response.statusCode,
+      "data": data,
+    };
+  }
 
   /// ===========================
   /// VERIFY EMAIL OTP
@@ -135,18 +153,25 @@ class AuthService {
     required String email,
     required String otp,
   }) async {
-    var url = Uri.parse("$baseUrl/api/users/verify-email/");
+    const endpoint = "/api/users/verify-email/";
+    final body = {"email": email, "otp": otp};
 
+    AppLog.request(endpoint, body: body);
+
+    var url = Uri.parse("$baseUrl$endpoint");
     var response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": email,
-        "otp": otp,
-      }),
+      body: jsonEncode(body),
     );
 
     var data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      AppLog.response(endpoint, data);
+    } else {
+      AppLog.error(endpoint, data, statusCode: response.statusCode);
+    }
 
     return {
       "status": response.statusCode,
@@ -154,7 +179,76 @@ class AuthService {
     };
   }
 
+  /// ===========================
+  /// VERIFY EMAIL (PASSWORD RESET)
+  /// ===========================
+  Future<Map<String, dynamic>> verifyEmail({
+    required String email,
+    required String otp,
+  }) async {
+    const endpoint = "/api/users/password-reset/verify/";
+    final body = {"email": email, "otp": otp};
 
+    AppLog.request(endpoint, body: body);
+
+    final url = Uri.parse("$baseUrl$endpoint");
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(body),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      AppLog.response(endpoint, data);
+    } else {
+      AppLog.error(endpoint, data, statusCode: response.statusCode);
+    }
+
+    return {
+      "status": response.statusCode,
+      "data": data,
+    };
+  }
+
+  /// ===========================
+  /// RESET PASSWORD
+  /// ===========================
+  Future<Map<String, dynamic>> resetPassword({
+    required String resetToken,
+    required String new_password,
+    required String confirm_password,
+  }) async {
+    const endpoint = "/api/users/password-reset/confirm/";
+    final body = {
+      "reset_token": resetToken,
+      "new_password": new_password,
+      "password_confirm": confirm_password,
+    };
+
+    AppLog.request(endpoint, body: body);
+
+    final url = Uri.parse("$baseUrl$endpoint");
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(body),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      AppLog.response(endpoint, data);
+    } else {
+      AppLog.error(endpoint, data, statusCode: response.statusCode);
+    }
+
+    return {
+      "status": response.statusCode,
+      "data": data,
+    };
+  }
 
   /// ===========================
   /// GET SAVED ACCESS TOKEN
@@ -162,28 +256,6 @@ class AuthService {
   static Future<String?> getAccessToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString("access_token");
-  }
-
-  // OTP verify API
-  Future<Map<String, dynamic>> verifyEmail({
-    required String email,
-    required String otp,
-  }) async {
-    final url = Uri.parse("$baseUrl/api/users/password-reset/verify/");
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": email,
-        "otp": otp,
-      }),
-    );
-    print(response.statusCode);
-
-    return {
-      "status": response.statusCode,
-      "data": jsonDecode(response.body),
-    };
   }
 
   /// ===========================
@@ -198,7 +270,8 @@ class AuthService {
   /// LOGOUT USER
   /// ===========================
   static Future<void> logout() async {
-    await StorageService.logout(); // সব clear
+    AppLog.info("User logged out — clearing storage");
+    await StorageService.logout();
     Get.offAll(() => const SignInScreen());
   }
 
@@ -206,9 +279,12 @@ class AuthService {
   /// PROTECTED API CALL EXAMPLE
   /// ===========================
   static Future<http.Response> fetchTermsPrivacy() async {
-    var token = await getAccessToken();
+    const endpoint = "/api/users/terms-privacy/";
 
-    var url = Uri.parse("$baseUrl/api/users/terms-privacy/");
+    AppLog.request(endpoint, method: 'GET');
+
+    var token = await getAccessToken();
+    var url = Uri.parse("$baseUrl$endpoint");
 
     var response = await http.get(
       url,
@@ -218,31 +294,12 @@ class AuthService {
       },
     );
 
+    if (response.statusCode == 200) {
+      AppLog.response(endpoint, jsonDecode(response.body));
+    } else {
+      AppLog.error(endpoint, response.body, statusCode: response.statusCode);
+    }
+
     return response;
-  }
-
-  Future<Map<String, dynamic>> resetPassword({
-    required String resetToken,
-    required String new_password,
-    required String confirm_password,
-  }) async {
-    final url = Uri.parse("$baseUrl/api/users/password-reset/confirm/");
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "reset_token": resetToken,
-        "new_password": new_password,
-        "password_confirm": confirm_password,
-      }),
-    );
-
-    print(response.statusCode);
-    print(response.body);
-
-    return {
-      "status": response.statusCode,
-      "data": jsonDecode(response.body),
-    };
   }
 }

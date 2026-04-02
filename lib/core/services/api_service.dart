@@ -20,6 +20,7 @@ class ApiServices {
     AppLog.request(endpoints, method: 'GET');
     final response = await _httpClient.get(url, headers: {..._defaultHeader, ...?headers});
     return _handleResponse(response, url, endpoints);
+
   }
 
   Future<dynamic> post(String endpoints, {Map<String, String>? headers, dynamic body}) async {
@@ -30,11 +31,12 @@ class ApiServices {
     return _handleResponse(response, url, endpoints);
   }
 
-  Future<dynamic> delete(String endpoints, {Map<String, String>? headers, dynamic body}) async {
+  // ✅ PUT — Postman screenshot এ update_username এ PUT use হয়েছে
+  Future<dynamic> put(String endpoints, {Map<String, String>? headers, dynamic body}) async {
     final url = Uri.parse('$baseUrl$endpoints');
-    AppLog.request(endpoints, method: 'DELETE', body: body);
+    AppLog.request(endpoints, method: 'PUT', body: body);
     final encodedBody = body != null ? jsonEncode(body) : null;
-    final response = await _httpClient.delete(url, headers: {..._defaultHeader, ...?headers}, body: encodedBody);
+    final response = await _httpClient.put(url, headers: {..._defaultHeader, ...?headers}, body: encodedBody);
     return _handleResponse(response, url, endpoints);
   }
 
@@ -43,6 +45,14 @@ class ApiServices {
     AppLog.request(endpoints, method: 'PATCH', body: body);
     final encodedBody = body != null ? jsonEncode(body) : null;
     final response = await _httpClient.patch(url, headers: {..._defaultHeader, ...?headers}, body: encodedBody);
+    return _handleResponse(response, url, endpoints);
+  }
+
+  Future<dynamic> delete(String endpoints, {Map<String, String>? headers, dynamic body}) async {
+    final url = Uri.parse('$baseUrl$endpoints');
+    AppLog.request(endpoints, method: 'DELETE', body: body);
+    final encodedBody = body != null ? jsonEncode(body) : null;
+    final response = await _httpClient.delete(url, headers: {..._defaultHeader, ...?headers}, body: encodedBody);
     return _handleResponse(response, url, endpoints);
   }
 
@@ -57,9 +67,6 @@ class ApiServices {
     return _handleResponse(response, url, endpoints);
   }
 
-
-
-
   Future<dynamic> postMultipart({
     required String endpoint,
     required Map<String, String> headers,
@@ -70,41 +77,27 @@ class ApiServices {
     String audioField = "audio",
   }) async {
     final uri = Uri.parse(baseUrl + endpoint);
-
-    // ─── Log Request ─────────────────────────────────
-    AppLog.request(
-      endpoint,
-      method: 'POST [multipart]',
-      body: {
-        "fields": fields,
-        "hasImage": file != null,
-        "hasAudio": audioFile != null,
-      },
-    );
+    AppLog.request(endpoint, method: 'POST [multipart]', body: {
+      "fields": fields,
+      "hasImage": file != null,
+      "hasAudio": audioFile != null,
+    });
 
     final request = http.MultipartRequest("POST", uri);
     request.headers.addAll(headers);
     request.fields.addAll(fields);
 
-    // Image
     if (file != null) {
-      request.files.add(
-        await http.MultipartFile.fromPath(fileField, file.path),
-      );
+      request.files.add(await http.MultipartFile.fromPath(fileField, file.path));
     }
-
-    // Audio
     if (audioFile != null) {
-      request.files.add(
-        await http.MultipartFile.fromPath(audioField, audioFile.path),
-      );
+      request.files.add(await http.MultipartFile.fromPath(audioField, audioFile.path));
     }
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
     final decoded = jsonDecode(response.body);
 
-    // ─── Log Response ─────────────────────────────────
     if (response.statusCode >= 200 && response.statusCode < 300) {
       AppLog.response(endpoint, decoded);
     } else {
