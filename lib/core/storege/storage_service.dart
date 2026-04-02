@@ -26,11 +26,15 @@ class StorageService {
   static bool get hasToken => accessToken != null && accessToken!.isNotEmpty;
 
   // ── Refresh Token ────────────────────────────────
-  static Future<void> saveRefreshToken(String refreshToken) async =>
-      await _box.write(_refreshTokenKey, refreshToken);
+  // static Future<void> saveRefreshToken(String refreshToken) async =>
+  //     await _box.write(_refreshTokenKey, refreshToken);
+  static Future<void> saveRefreshToken(String token) async {
+    await _box.write('refresh_token', token);
+  }
   // await StorageService.saveRefreshToken(refreshToken);
+  static String? get refreshToken => _box.read<String>('refresh_token');
 
-  static String? get refreshToken => _box.read(_refreshTokenKey);
+  // static String? get refreshToken => _box.read(_refreshTokenKey);
 
   // ── User Info ────────────────────────────────────
   static Future<void> saveUserInfo({

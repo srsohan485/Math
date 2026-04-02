@@ -1,3 +1,5 @@
+// lib/features/Controller/ChatController/chat_controller.dart
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,27 +9,28 @@ import 'package:just_audio/just_audio.dart';
 import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../../core/services/AuthService/auth_service.dart'; // ✅
 import '../../../core/services/ChatService/chat_service.dart';
 import '../../../core/storege/storage_service.dart';
 import '../../Model/ChetModel/chat_model.dart';
+import '../../View/AuthScreen/singin_screen.dart';
 
 class ChatController extends GetxController {
-  // ─── Text Controller ─────────────────────────────────
-  final inputController = TextEditingController();
-  final _player = AudioPlayer();
+  final inputController  = TextEditingController();
+  final _player          = AudioPlayer();
   File? selectedImage;
   File? selectedAudio;
 
-  // ─── Observables ─────────────────────────────────────
-  final messages       = <ChatMessage>[].obs;
-  final isLoading      = false.obs;
-  final isInitializing = true.obs;
-  final sessionId      = 0.obs;
-  final isRecording    = false.obs; // ← recording state
-  // Audio player
-  final playingAudioId = (-1).obs;
+  final messages          = <ChatMessage>[].obs;
+  final sessions          = <ChatSession>[].obs;
+  final isLoading         = false.obs;
+  final isInitializing    = true.obs;
+  final isLoadingSessions = false.obs;
+  final isLoggingOut      = false.obs; // ✅ NEW
+  final sessionId         = 0.obs;
+  final isRecording       = false.obs;
+  final playingAudioId    = (-1).obs;
 
-  // ─── Internal ────────────────────────────────────────
   final _chatService     = ChatService();
   final _recorder        = AudioRecorder();
   final scrollController = ScrollController();
@@ -35,7 +38,7 @@ class ChatController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _createSession();
+    _bootstrap();
   }
 
   @override
@@ -48,17 +51,139 @@ class ChatController extends GetxController {
   }
 
   // ════════════════════════════════════════════════════
+  //  Bootstrap
+  // ════════════════════════════════════════════════════
+  Future<void> _bootstrap() async {
+    isInitializing.value = true;
+    try {
+      await loadSessions();
+      if (sessions.isNotEmpty) {
+        await loadSession(sessions.first.id);
+      } else {
+        await _createSession();
+      }
+    } catch (e) {
+      debugPrint("_bootstrap error: $e");
+      await _createSession();
+    } finally {
+      isInitializing.value = false;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  //  Load session list
+  // ════════════════════════════════════════════════════
+  Future<void> loadSessions() async {
+    isLoadingSessions.value = true;
+    try {
+      final list = await _chatService.fetchSessions();
+      sessions.assignAll(list);
+    } catch (e) {
+      debugPrint("loadSessions error: $e");
+    } finally {
+      isLoadingSessions.value = false;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  //  Load a session's messages
+  // ════════════════════════════════════════════════════
+  Future<void> loadSession(int id) async {
+    isLoading.value = true;
+    messages.clear();
+    try {
+      final msgs = await _chatService.fetchSessionMessages(id);
+      sessionId.value = id;
+      messages.assignAll(msgs);
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint("loadSession error: $e");
+      _showError("Chat history load হয়নি।");
+      sessionId.value = id;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  //  New Chat
+  // ════════════════════════════════════════════════════
+  Future<void> startNewSession() async {
+    messages.clear();
+    await _createSession();
+    await loadSessions();
+  }
+
+  // ════════════════════════════════════════════════════
   //  Create Session
   // ════════════════════════════════════════════════════
   Future<void> _createSession() async {
-    isInitializing.value = true;
     try {
       final id = await _chatService.createSession();
       sessionId.value = id;
+      debugPrint("✅ New session created: $id");
     } catch (e) {
-      _showError("Failed to start chat session. Please try again.");
+      debugPrint("_createSession error: $e");
+      _showError("Chat session শুরু হয়নি।");
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  //  Rename Session
+  // ════════════════════════════════════════════════════
+  Future<void> renameSession(int id, String newTitle) async {
+    try {
+      final updated = await _chatService.renameSession(id, newTitle);
+      final idx = sessions.indexWhere((s) => s.id == id);
+      if (idx != -1) {
+        sessions[idx] = updated;
+        sessions.refresh();
+      }
+    } catch (e) {
+      debugPrint("renameSession error: $e");
+      _showError("Rename করা যায়নি।");
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  //  Delete Session
+  // ════════════════════════════════════════════════════
+  Future<void> deleteSession(int id) async {
+    try {
+      await _chatService.deleteSession(id);
+      sessions.removeWhere((s) => s.id == id);
+      if (sessionId.value == id) {
+        messages.clear();
+        if (sessions.isNotEmpty) {
+          await loadSession(sessions.first.id);
+        } else {
+          await _createSession();
+        }
+      }
+    } catch (e) {
+      debugPrint("deleteSession error: $e");
+      _showError("Delete করা যায়নি।");
+    }
+  }
+
+  // ════════════════════════════════════════════════════
+  //  LOGOUT ✅ NEW
+  //  AuthService.logout() → static method
+  //  POST /api/users/logout/ body: { "refresh": "..." }
+  // ════════════════════════════════════════════════════
+  Future<void> logout() async {
+    isLoggingOut.value = true;
+    try {
+      // ✅ AuthService.logout() এখন API call করে তারপর
+      //    StorageService.logout() call করে Get.offAll() করে
+      await AuthService.logout();
+    } catch (e) {
+      debugPrint("logout error: $e");
+      // ✅ যেকোনো error এ force logout
+      await StorageService.logout();
+      Get.offAll(() => const SignInScreen());
     } finally {
-      isInitializing.value = false;
+      isLoggingOut.value = false;
     }
   }
 
@@ -68,7 +193,6 @@ class ChatController extends GetxController {
   Future<void> pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
-
     if (picked != null) {
       selectedImage = File(picked.path);
       Get.snackbar(
@@ -82,7 +206,7 @@ class ChatController extends GetxController {
   }
 
   // ════════════════════════════════════════════════════
-  //  Voice Recording — Toggle
+  //  Voice Recording
   // ════════════════════════════════════════════════════
   Future<void> toggleRecording() async {
     if (isRecording.value) {
@@ -93,17 +217,15 @@ class ChatController extends GetxController {
   }
 
   Future<void> _startRecording() async {
-    // Permission check
     final status = await Permission.microphone.request();
     if (!status.isGranted) {
       _showError("Microphone permission denied");
       return;
     }
-
     try {
       final dir  = await getTemporaryDirectory();
-      final path = "${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
-
+      final path =
+          "${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a";
       await _recorder.start(
         const RecordConfig(
           encoder: AudioEncoder.aacLc,
@@ -112,9 +234,7 @@ class ChatController extends GetxController {
         ),
         path: path,
       );
-
       isRecording.value = true;
-
       Get.snackbar(
         "Recording...",
         "আবার Mic চাপুন থামাতে",
@@ -132,12 +252,9 @@ class ChatController extends GetxController {
     try {
       final path = await _recorder.stop();
       isRecording.value = false;
-
       if (path != null) {
         selectedAudio = File(path);
         update();
-
-        // ← record বন্ধ হলে সাথে সাথে send করুন
         await sendMessage();
       }
     } catch (e) {
@@ -145,8 +262,6 @@ class ChatController extends GetxController {
       _showError("Recording বন্ধ হয়নি: $e");
     }
   }
-
-
 
   // ════════════════════════════════════════════════════
   //  Send Message
@@ -158,12 +273,18 @@ class ChatController extends GetxController {
         isLoading.value) return;
 
     if (sessionId.value == 0) {
-      _showError("Session not ready.");
-      return;
+      await _createSession();
+      if (sessionId.value == 0) {
+        _showError("Session ready নেই। আবার চেষ্টা করুন।");
+        return;
+      }
     }
 
+    // ✅ UNIQUE ID (IMPORTANT FIX)
+    final tempId = DateTime.now().millisecondsSinceEpoch;
+
     final optimisticUser = ChatMessage(
-      id: -1,
+      id: tempId, // 🔥 FIXED (was -1)
       session: sessionId.value,
       sender: "USER",
       message: text,
@@ -177,37 +298,126 @@ class ChatController extends GetxController {
     isLoading.value = true;
     _scrollToBottom();
 
+    final imgToSend = selectedImage;
+    final audToSend = selectedAudio;
+
+    selectedImage = null;
+    selectedAudio = null;
+    update();
+
     try {
       final round = await _chatService.sendMessage(
         sessionId: sessionId.value,
         message: text.isEmpty ? null : text,
-        imageFile: selectedImage,
-        audioFile: selectedAudio,
+        imageFile: imgToSend,
+        audioFile: audToSend,
       );
 
-      final idx = messages.indexWhere((m) => m.id == -1 && m.sender == "USER");
-      if (idx != -1) messages[idx] = round.userMessage;
+      // ✅ FIX: specific message replace using tempId
+      final idx = messages.indexWhere((m) => m.id == tempId);
+      if (idx != -1) {
+        messages[idx] = round.userMessage;
+      }
 
       messages.add(round.aiResponse);
       _scrollToBottom();
-
-      selectedImage = null;
-      selectedAudio = null;
-      update();
+      loadSessions();
 
     } catch (e) {
-      messages.removeWhere((m) => m.id == -1);
+      debugPrint("sendMessage error: $e");
+
+      // ✅ remove only this message
+      messages.removeWhere((m) => m.id == tempId);
+
       inputController.text = text;
-      _showError("Failed to send");
+      selectedImage = imgToSend;
+      selectedAudio = audToSend;
+      update();
+
+      _showError("Message পাঠানো যায়নি।");
     } finally {
       isLoading.value = false;
       _scrollToBottom();
     }
   }
 
+  // ════════════════════════════════════════════════════
+  //  Play Audio
+  // ════════════════════════════════════════════════════
+  Future<void> playAudio(int messageId, String audioPath) async {
+    try {
+      // 🔁 যদি same audio tap করা হয় → stop
+      if (playingAudioId.value == messageId) {
+        await _player.stop();
+        playingAudioId.value = -1;
+        return;
+      }
 
+      // 🔴 আগের audio stop করো (IMPORTANT)
+      await _player.stop();
 
+      playingAudioId.value = messageId;
 
+      if (audioPath.startsWith('/data/') ||
+          audioPath.startsWith('/storage/')) {
+
+        final file = File(audioPath);
+
+        if (await file.exists()) {
+          await _player.setFilePath(file.path);
+        } else {
+          _showError("Audio file পাওয়া যায়নি");
+          playingAudioId.value = -1;
+          return;
+        }
+
+      } else {
+        final fullUrl = audioPath.startsWith('http')
+            ? audioPath
+            : "https://mathapi.dsrt321.online$audioPath";
+
+        final token = StorageService.accessToken;
+
+        final response = await http.get(
+          Uri.parse(fullUrl),
+          headers: {
+            if (token != null && token.isNotEmpty)
+              "Authorization": "Bearer $token",
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final dir = await getTemporaryDirectory();
+          final file = File("${dir.path}/play_$messageId.m4a");
+
+          await file.writeAsBytes(response.bodyBytes);
+
+          await _player.setFilePath(file.path);
+        } else {
+          _showError("Audio load হয়নি: ${response.statusCode}");
+          playingAudioId.value = -1;
+          return;
+        }
+      }
+
+      // 🔊 VERY IMPORTANT (volume fix)
+      await _player.setVolume(1.0); // full volume
+
+      // ▶️ play
+      await _player.play();
+
+      // ✅ FIX: listener leak remove
+      _player.playerStateStream.firstWhere(
+            (state) => state.processingState == ProcessingState.completed,
+      ).then((_) {
+        playingAudioId.value = -1;
+      });
+
+    } catch (e) {
+      playingAudioId.value = -1;
+      _showError("Audio play হয়নি: $e");
+    }
+  }
 
   // ════════════════════════════════════════════════════
   //  Helpers
@@ -234,76 +444,4 @@ class ChatController extends GetxController {
       duration: const Duration(seconds: 3),
     );
   }
-
-  // ════════════════════════════════════════════════════
-  //  Play Audio
-  // ════════════════════════════════════════════════════
-  Future<void> playAudio(int messageId, String audioPath) async {
-    print("🎵 playAudio called: id=$messageId, path=$audioPath");
-    try {
-      if (playingAudioId.value == messageId) {
-        await _player.stop();
-        playingAudioId.value = -1;
-        return;
-      }
-
-      playingAudioId.value = messageId;
-
-      // local temp file
-      if (audioPath.startsWith('/data/') || audioPath.startsWith('/storage/')) {
-        final file = File(audioPath);
-        if (await file.exists()) {
-          await _player.setFilePath(audioPath);
-        } else {
-          _showError("Audio file পাওয়া যায়নি");
-          playingAudioId.value = -1;
-          return;
-        }
-      } else {
-        // server path → token সহ download করে temp file এ save করো
-        final fullUrl = audioPath.startsWith('http')
-            ? audioPath
-            : "https://mathapi.dsrt321.online$audioPath";
-
-        print("🌐 Downloading: $fullUrl");
-
-        final token = StorageService.accessToken;
-        final response = await http.get(
-          Uri.parse(fullUrl),
-          headers: {
-            if (token != null) "Authorization": "Bearer $token",
-          },
-        );
-
-        print("📥 Download status: ${response.statusCode}");
-
-        if (response.statusCode == 200) {
-          // temp file এ save করো
-          final dir  = await getTemporaryDirectory();
-          final file = File("${dir.path}/play_${messageId}.m4a");
-          await file.writeAsBytes(response.bodyBytes);
-          print("💾 Saved to: ${file.path}");
-          await _player.setFilePath(file.path);
-        } else {
-          _showError("Audio load হয়নি: ${response.statusCode}");
-          playingAudioId.value = -1;
-          return;
-        }
-      }
-
-      await _player.play();
-      print("▶️ Playing...");
-
-      _player.playerStateStream.listen((state) {
-        if (state.processingState == ProcessingState.completed) {
-          playingAudioId.value = -1;
-        }
-      });
-    } catch (e) {
-      print("❌ Audio error: $e");
-      playingAudioId.value = -1;
-      _showError("Audio play হয়নি: $e");
-    }
-  }
-
 }

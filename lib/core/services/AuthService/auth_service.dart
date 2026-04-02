@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../features/View/AuthScreen/singin_screen.dart';
 import '../../storege/storage_service.dart';
-import '../app_log.dart'; // AppLog import
+import '../app_log.dart';
 
 class AuthService {
   static const String baseUrl = "https://mathapi.dsrt321.online";
@@ -266,11 +266,55 @@ class AuthService {
     return prefs.getString("refresh_token");
   }
 
-  /// ===========================
-  /// LOGOUT USER
-  /// ===========================
+  // ════════════════════════════════════════════════════
+  //  LOGOUT USER  ✅ UPDATED
+  //  POST /api/users/logout/
+  //  Body: { "refresh": "<refresh_token>" }
+  //  ⚠️ শুধু local clear করলে 400 "Invalid token." আসে
+  //     তাই body তে refresh token পাঠাতে হবে
+  // ════════════════════════════════════════════════════
   static Future<void> logout() async {
-    AppLog.info("User logged out — clearing storage");
+    const endpoint = "/api/users/logout/";
+
+    final accessToken  = StorageService.accessToken;
+    final refreshToken = StorageService.refreshToken;
+
+    AppLog.request(endpoint, method: 'POST', body: {"refresh": "***"});
+
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl$endpoint"),
+        headers: {
+          "Content-Type": "application/json",
+          if (accessToken != null && accessToken.isNotEmpty)
+            "Authorization": "Bearer $accessToken",
+        },
+        // ✅ refresh token body তে দিতে হবে — না দিলে 400 আসে
+        body: jsonEncode({
+          "refresh": refreshToken ?? "",
+        }),
+      );
+
+      AppLog.response(endpoint, {
+        "status": response.statusCode,
+        "body": response.body,
+      });
+
+      if (response.statusCode == 200 ||
+          response.statusCode == 204 ||
+          response.statusCode == 205) {
+        AppLog.info("Logout API success ✅");
+      } else {
+        // 400 "Invalid token" — তবুও local clear করবো
+        AppLog.error(endpoint, response.body,
+            statusCode: response.statusCode);
+      }
+    } catch (e) {
+      // network error — তবুও local clear করবো
+      AppLog.info("Logout network error (ignoring): $e");
+    }
+
+    // ✅ API success বা fail — সবসময় local storage clear করো
     await StorageService.logout();
     Get.offAll(() => const SignInScreen());
   }

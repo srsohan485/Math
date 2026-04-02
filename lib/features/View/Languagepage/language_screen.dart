@@ -53,7 +53,7 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
 
               /// Title
               Text(
-                'Select language',
+                AppStrings.language,
                 style: TextStyle(
                   fontSize: 26.sp,
                   fontWeight: FontWeight.w700,
@@ -202,7 +202,7 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
                     // Handle confirm action
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Language selected: $_selectedLanguage'),
+                        content: Text("${AppStrings.language}: $_selectedLanguage"),
                         backgroundColor: const Color(0xFF1A2A4A),
                       ),
                     );

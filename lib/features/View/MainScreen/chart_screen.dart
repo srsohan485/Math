@@ -7,7 +7,6 @@ import 'package:get/get.dart';
 import 'package:mathsolving/features/View/MainScreen/profile_srceen.dart';
 import 'package:mathsolving/features/View/MainScreen/termscondition_screen.dart';
 import '../../../core/AppColor/app_color.dart';
-import '../../../core/AppImages/app_images.dart';
 import '../../../core/AppText/app_text.dart';
 import '../../Controller/ChatController/chat_controller.dart';
 import '../../Model/ChetModel/chat_model.dart';
@@ -17,7 +16,6 @@ import '../AuthScreen/singup_srceen.dart';
 class MainChatScreen extends StatelessWidget {
   const MainChatScreen({super.key});
 
-  // ── Sparkle data ─────────────────────────────────────
   static const List<_SparkleData> _sparkles = [
     _SparkleData(dx: 0.07, dy: 0.18, size: 16, color: Color(0xFF8BAAD8), delay: 0),
     _SparkleData(dx: 0.73, dy: 0.15, size: 9,  color: Color(0xFF8BAAD8), delay: 180),
@@ -50,8 +48,8 @@ class MainChatScreen extends StatelessWidget {
             _buildTopBar(context, colors),
             Expanded(
               child: Obx(() {
-                // Show sparkle home screen when no messages yet
-                if (controller.messages.isEmpty && !controller.isLoading.value) {
+                if (controller.messages.isEmpty &&
+                    !controller.isLoading.value) {
                   return _buildEmptyBody(colors);
                 }
                 return _buildMessageList(colors, controller);
@@ -64,120 +62,336 @@ class MainChatScreen extends StatelessWidget {
     );
   }
 
-  // ── DRAWER ───────────────────────────────────────────
+  // ════════════════════════════════════════════════════
+  //  DRAWER
+  // ════════════════════════════════════════════════════
   Widget _buildDrawer(AppColors colors, ChatController controller) {
-    return Builder(
-      builder: (context) => Drawer(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 50.h),
-              Icon(Icons.menu, size: 28.sp),
-              SizedBox(height: 30.h),
+    return Drawer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 50.h),
 
-              // New Chat
-              GestureDetector(
-                onTap: () {
-                  Get.back();
-                  controller.messages.clear();
-                  controller.onInit();
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xff2F3E5B),
-                    borderRadius: BorderRadius.circular(10.r),
+          // ── Header: menu icon + New Chat ──────────────
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Row(
+              children: [
+                Icon(Icons.menu, size: 28.sp),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () async {
+                    Get.back();
+                    await controller.startNewSession();
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 14.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff2F3E5B),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.edit, color: Colors.white, size: 15.sp),
+                        SizedBox(width: 6.w),
+                        Text(AppStrings.newtext,
+                            style: TextStyle(
+                                color: Colors.white, fontSize: 13.sp)),
+                      ],
+                    ),
                   ),
-                  child: Row(
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 16.h),
+
+          // ── Profile & Terms ───────────────────────────
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _drawerNavBtn(
+                  icon: Icons.person_outline,
+                  label: AppStrings.profile,
+                  onTap: () => Get.to(() => ProfileScreen()),
+                ),
+                _drawerNavBtn(
+                  icon: Icons.description_outlined,
+                  label: AppStrings.termsconditiontext,
+                  onTap: () => Get.to(() => TermsAndPrivacyScreen()),
+                ),
+              ],
+            ),
+          ),
+
+          Divider(height: 1.h),
+          SizedBox(height: 6.h),
+
+          // ── History label + refresh ───────────────────
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+            child: Row(
+              children: [
+                Text(
+                  AppStrings.history,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black54,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const Spacer(),
+                Obx(() => controller.isLoadingSessions.value
+                    ? SizedBox(
+                  width: 16.w,
+                  height: 16.h,
+                  child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xff2F3E5B)),
+                )
+                    : GestureDetector(
+                  onTap: controller.loadSessions,
+                  child: Icon(Icons.refresh,
+                      size: 20.sp, color: Colors.black38),
+                )),
+              ],
+            ),
+          ),
+
+          // ── Session list ──────────────────────────────
+          Expanded(
+            child: Obx(() {
+              if (controller.isLoadingSessions.value &&
+                  controller.sessions.isEmpty) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                      color: Color(0xff2F3E5B)),
+                );
+              }
+              if (controller.sessions.isEmpty) {
+                return Center(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.edit, color: Colors.white, size: 18.sp),
+                      Icon(Icons.chat_bubble_outline,
+                          size: 34.sp, color: Colors.black26),
+                      SizedBox(height: 8.h),
+                      Text(AppStrings.nochats,
+                          style: TextStyle(
+                              fontSize: 13.sp,
+                              color: Colors.black38)),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                itemCount: controller.sessions.length,
+                itemBuilder: (ctx, i) {
+                  final session = controller.sessions[i];
+                  return Obx(() {
+                    final isActive =
+                        controller.sessionId.value == session.id;
+                    return _SessionTile(
+                      session: session,
+                      isActive: isActive,
+                      onTap: () async {
+                        Get.back();
+                        await controller.loadSession(session.id);
+                      },
+                      onRename: () =>
+                          _showRenameDialog(ctx, controller, session),
+                      onDelete: () =>
+                          _showDeleteDialog(ctx, controller, session.id),
+                    );
+                  });
+                },
+              );
+            }),
+          ),
+
+          Divider(height: 1.h),
+          SizedBox(height: 10.h),
+
+          // ── Logout ────────────────────────────────────
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Obx(() {
+              final isOut = controller.isLoggingOut.value;
+              return GestureDetector(
+                onTap: isOut
+                    ? null
+                    : () async {
+                  // ✅ confirm dialog
+                  final confirm = await showDialog<bool>(
+                    context: Get.context!,
+                    builder: (dialogContext) => AlertDialog(
+                      title: const Text("Logout?"),
+                      content: const Text("Are you sure you want to log out of your account?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext, false),
+                          child: const Text("Cancel"),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff2F3E5B),
+                          ),
+                          onPressed: () => Navigator.pop(dialogContext, true),
+                          child: const Text(
+                            "Logout",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm == true) {
+                    Get.offAll(() => SignInScreen());
+                  }
+                  if (confirm == true) {
+                    Get.back(); // drawer বন্ধ করো
+                    await controller.logout(); // ✅ API call
+                  }
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 20.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: isOut
+                        ? const Color(0xff2F3E5B).withOpacity(0.5)
+                        : const Color(0xff2F3E5B),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: isOut
+                      ? const Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  )
+                      : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.logout,
+                          color: Colors.white, size: 16.sp),
                       SizedBox(width: 8.w),
                       Text(
-                        AppStrings.newtext,
-                        style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                        AppStrings.Logout,
+                        style: TextStyle(
+                            color: Colors.white, fontSize: 14.sp),
                       ),
                     ],
                   ),
                 ),
-              ),
-
-              SizedBox(height: 30.h),
-
-              /// ✅ Profile
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => ProfileScreen()),
-                  );
-                },
-                child: Text(
-                  AppStrings.profile,
-                  style: TextStyle(fontSize: 16.sp),
-                ),
-              ),
-
-              SizedBox(height: 20.h),
-
-              /// ✅ Terms & Condition
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => TermsAndPrivacyScreen()),
-                  );
-                },
-                child: Text(
-                  AppStrings.termsconditiontext,
-                  style: TextStyle(fontSize: 16.sp),
-                ),
-              ),
-
-              SizedBox(height: 20.h),
-              const Divider(),
-              SizedBox(height: 10.h),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(AppStrings.history, style: TextStyle(fontSize: 16.sp)),
-                  const Icon(Icons.keyboard_arrow_down),
-                ],
-              ),
-
-              const Spacer(),
-
-              /// ✅ Logout Button
-              GestureDetector(
-                onTap: () {
-                  Get.offAll(() => SignInScreen());
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xff2F3E5B),
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: Text(
-                    AppStrings.Logout,
-                    style: TextStyle(color: Colors.white, fontSize: 14.sp),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 30.h),
-            ],
+              );
+            }),
           ),
-        ),
+          SizedBox(height: 30.h),
+        ],
       ),
     );
   }
 
-  // ── TOP BAR ──────────────────────────────────────────
+  // ── Rename dialog ─────────────────────────────────
+  void _showRenameDialog(
+      BuildContext context, ChatController controller, ChatSession session) {
+    final tc = TextEditingController(text: session.title ?? "");
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Rename Chat"),
+        content: TextField(
+          controller: tc,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: "Chat এর নাম লিখুন...",
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff2F3E5B)),
+            onPressed: () async {
+              final name = tc.text.trim();
+              if (name.isEmpty) return;
+              Navigator.pop(context);
+              await controller.renameSession(session.id, name);
+            },
+            child: const Text("Save",
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Delete confirm dialog ─────────────────────────
+  void _showDeleteDialog(
+      BuildContext context, ChatController controller, int sessionId) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete Chat?"),
+        content: const Text("এই chat টি permanently delete হয়ে যাবে।"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade600),
+            onPressed: () async {
+              Navigator.pop(context);
+              await controller.deleteSession(sessionId);
+            },
+            child: const Text("Delete",
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _drawerNavBtn(
+      {required IconData icon,
+        required String label,
+        required VoidCallback onTap}) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 18.sp, color: Colors.black87),
+      label: Text(label,
+          style:
+          TextStyle(fontSize: 15.sp, color: Colors.black87)),
+    );
+  }
+
+  // ════════════════════════════════════════════════════
+  //  TOP BAR
+  // ════════════════════════════════════════════════════
   Widget _buildTopBar(BuildContext context, AppColors colors) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+      padding:
+      EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -191,7 +405,8 @@ class MainChatScreen extends StatelessWidget {
           GestureDetector(
             onTap: () => Get.to(() => const SignUpScreen()),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 9.h),
+              padding: EdgeInsets.symmetric(
+                  horizontal: 22.w, vertical: 9.h),
               decoration: BoxDecoration(
                 color: colors.mainBtnColor,
                 borderRadius: BorderRadius.circular(22.r),
@@ -211,17 +426,18 @@ class MainChatScreen extends StatelessWidget {
     );
   }
 
-  // ── EMPTY / HOME BODY (sparkles + heading) ───────────
+  // ════════════════════════════════════════════════════
+  //  EMPTY BODY (sparkles)
+  // ════════════════════════════════════════════════════
   Widget _buildEmptyBody(AppColors colors) {
     return LayoutBuilder(builder: (context, constraints) {
       final w = constraints.maxWidth;
       final h = constraints.maxHeight;
-
       return Stack(
         children: [
           ..._sparkles.map((s) => Positioned(
             left: s.dx * w,
-            top:  s.dy * h,
+            top: s.dy * h,
             child: _AnimatedSparkle(data: s),
           )),
           Positioned(
@@ -243,14 +459,14 @@ class MainChatScreen extends StatelessWidget {
     });
   }
 
-  // ── MESSAGE LIST ─────────────────────────────────────
+  // ════════════════════════════════════════════════════
+  //  MESSAGE LIST
+  // ════════════════════════════════════════════════════
   Widget _buildMessageList(AppColors colors, ChatController controller) {
     return Obx(() {
-      // messages বা isLoading যখনই change হবে, scroll হবে
       final itemCount = controller.messages.length +
           (controller.isLoading.value ? 1 : 0);
 
-      // Build শেষে auto-scroll
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (controller.scrollController.hasClients) {
           controller.scrollController.animateTo(
@@ -264,7 +480,8 @@ class MainChatScreen extends StatelessWidget {
       return ListView.builder(
         controller: controller.scrollController,
         physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(
+            horizontal: 16.w, vertical: 12.h),
         itemCount: itemCount,
         itemBuilder: (context, index) {
           if (controller.isLoading.value &&
@@ -280,7 +497,7 @@ class MainChatScreen extends StatelessWidget {
     });
   }
 
-  // ── USER BUBBLE ──────────────────────────────────────
+  // ── User bubble ───────────────────────────────────
   Widget _buildUserBubble(ChatMessage msg, AppColors colors) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h, left: 60.w),
@@ -291,9 +508,9 @@ class MainChatScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.mainBtnColor,
             borderRadius: BorderRadius.only(
-              topLeft:     Radius.circular(16.r),
-              topRight:    Radius.circular(16.r),
-              bottomLeft:  Radius.circular(16.r),
+              topLeft: Radius.circular(16.r),
+              topRight: Radius.circular(16.r),
+              bottomLeft: Radius.circular(16.r),
               bottomRight: Radius.circular(4.r),
             ),
           ),
@@ -301,7 +518,8 @@ class MainChatScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ─── Image ───────────────────────────────
+
+              // 🖼️ IMAGE
               if (msg.image != null && msg.image!.isNotEmpty)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10.r),
@@ -311,8 +529,8 @@ class MainChatScreen extends StatelessWidget {
                         : "https://mathapi.dsrt321.online${msg.image!}",
                     width: 200.w,
                     fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
+                    loadingBuilder: (ctx, child, progress) {
+                      if (progress == null) return child;
                       return SizedBox(
                         width: 200.w,
                         height: 120.h,
@@ -321,7 +539,7 @@ class MainChatScreen extends StatelessWidget {
                         ),
                       );
                     },
-                    errorBuilder: (context, error, stack) => Icon(
+                    errorBuilder: (ctx, e, s) => Icon(
                       Icons.broken_image,
                       color: Colors.white,
                       size: 40.sp,
@@ -332,13 +550,16 @@ class MainChatScreen extends StatelessWidget {
               if (msg.image != null && msg.message.isNotEmpty)
                 SizedBox(height: 6.h),
 
-              // ─── Audio Player Button ──────────────────
+              // 🎤 AUDIO (IMPROVED)
               if (msg.audio != null && msg.audio!.isNotEmpty)
                 Obx(() {
-                  final controller = Get.find<ChatController>();
-                  final isPlaying  = controller.playingAudioId.value == msg.id;
+                  final ctrl = Get.find<ChatController>();
+                  final isPlaying = ctrl.playingAudioId.value == msg.id;
+
                   return GestureDetector(
-                    onTap: () => controller.playAudio(msg.id, msg.audio!),
+                    onTap: () async {
+                      await ctrl.playAudio(msg.id, msg.audio!);
+                    },
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                       decoration: BoxDecoration(
@@ -353,13 +574,28 @@ class MainChatScreen extends StatelessWidget {
                             color: Colors.white,
                             size: 28.sp,
                           ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            isPlaying ? "Playing..." : "Voice Message",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 13.sp,
-                            ),
+                          SizedBox(width: 8.w),
+
+                          // 🔊 Text + fake duration style
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isPlaying ? "Playing..." : "Voice Message",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13.sp,
+                                ),
+                              ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                isPlaying ? "Tap to stop" : "Tap to play",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11.sp,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -370,7 +606,7 @@ class MainChatScreen extends StatelessWidget {
               if (msg.audio != null && msg.message.isNotEmpty)
                 SizedBox(height: 6.h),
 
-              // ─── Text ────────────────────────────────
+              // 💬 TEXT
               if (msg.message.isNotEmpty)
                 Text(
                   msg.message,
@@ -387,27 +623,27 @@ class MainChatScreen extends StatelessWidget {
     );
   }
 
-  // ── AI BUBBLE ────────────────────────────────────────
+  // ── AI bubble ─────────────────────────────────────
   Widget _buildAiBubble(ChatMessage msg, AppColors colors) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h, right: 60.w),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // AI avatar
           Container(
             width: 32.w,
             height: 32.w,
             margin: EdgeInsets.only(right: 8.w, top: 2.h),
             decoration: BoxDecoration(
-              color: colors.mainBtnColor,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.auto_awesome, color: Colors.white, size: 16.sp),
+                color: colors.mainBtnColor,
+                shape: BoxShape.circle),
+            child: Icon(Icons.auto_awesome,
+                color: Colors.white, size: 16.sp),
           ),
           Expanded(
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+              padding: EdgeInsets.symmetric(
+                  horizontal: 14.w, vertical: 10.h),
               decoration: BoxDecoration(
                 color: colors.softMintBackground,
                 border: Border.all(color: colors.border),
@@ -419,9 +655,6 @@ class MainChatScreen extends StatelessWidget {
                 ),
               ),
               child: Text(
-                // Clean up LaTeX markers for plain-text display.
-                // If you add flutter_math_fork later, replace this
-                // with a proper LaTeX renderer.
                 _cleanLatex(msg.message),
                 style: TextStyle(
                   fontSize: 14.sp,
@@ -436,7 +669,7 @@ class MainChatScreen extends StatelessWidget {
     );
   }
 
-  // ── TYPING INDICATOR ─────────────────────────────────
+  // ── Typing indicator ──────────────────────────────
   Widget _buildTypingIndicator(AppColors colors) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h, right: 60.w),
@@ -448,13 +681,14 @@ class MainChatScreen extends StatelessWidget {
             height: 32.w,
             margin: EdgeInsets.only(right: 8.w, top: 2.h),
             decoration: BoxDecoration(
-              color: colors.mainBtnColor,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.auto_awesome, color: Colors.white, size: 16.sp),
+                color: colors.mainBtnColor,
+                shape: BoxShape.circle),
+            child: Icon(Icons.auto_awesome,
+                color: Colors.white, size: 16.sp),
           ),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+            padding: EdgeInsets.symmetric(
+                horizontal: 14.w, vertical: 14.h),
             decoration: BoxDecoration(
               color: colors.softMintBackground,
               border: Border.all(color: colors.border),
@@ -467,42 +701,44 @@ class MainChatScreen extends StatelessWidget {
     );
   }
 
-  // ── BOTTOM BAR ───────────────────────────────────────
+  // ════════════════════════════════════════════════════
+  //  BOTTOM BAR
+  // ════════════════════════════════════════════════════
   Widget _buildBottomBar(AppColors colors, ChatController controller) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Image selected indicator
+        // Image preview
         GetBuilder<ChatController>(
           builder: (ctrl) {
-            if (ctrl.selectedImage == null) return const SizedBox.shrink();
+            if (ctrl.selectedImage == null) {
+              return const SizedBox.shrink();
+            }
             return Container(
               color: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+              padding: EdgeInsets.symmetric(
+                  horizontal: 14.w, vertical: 6.h),
               child: Row(
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8.r),
-                    child: Image.file(
-                      ctrl.selectedImage!,
-                      height: 50.h,
-                      width: 50.w,
-                      fit: BoxFit.cover,
-                    ),
+                    child: Image.file(ctrl.selectedImage!,
+                        height: 50.h,
+                        width: 50.w,
+                        fit: BoxFit.cover),
                   ),
                   SizedBox(width: 8.w),
-                  Text(
-                    "Image ready — Tapy Here",
-                    style: TextStyle(fontSize: 12.sp, color: Colors.grey),
-                  ),
+                  Text("Image ready",
+                      style: TextStyle(
+                          fontSize: 12.sp, color: Colors.grey)),
                   const Spacer(),
-                  // Image remove button
                   GestureDetector(
                     onTap: () {
                       ctrl.selectedImage = null;
                       ctrl.update();
                     },
-                    child: const Icon(Icons.close, color: Colors.red),
+                    child:
+                    const Icon(Icons.close, color: Colors.red),
                   ),
                 ],
               ),
@@ -510,29 +746,31 @@ class MainChatScreen extends StatelessWidget {
           },
         ),
 
-        // আপনার existing bottom bar
+        // Input bar
         Container(
           color: colors.mainBtnColor,
-          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+          padding: EdgeInsets.symmetric(
+              horizontal: 14.w, vertical: 10.h),
           child: Row(
             children: [
               Obx(() => GestureDetector(
                 onTap: () => controller.toggleRecording(),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  child: Icon(
-                    controller.isRecording.value
-                        ? Icons.stop_circle  // চলছে → stop
-                        : Icons.mic_none_rounded, // idle → mic
-                    color: controller.isRecording.value
-                        ? Colors.red
-                        : Colors.white,
-                    size: 26.sp,
-                  ),
+                child: Icon(
+                  controller.isRecording.value
+                      ? Icons.stop_circle
+                      : Icons.mic_none_rounded,
+                  color: controller.isRecording.value
+                      ? Colors.red
+                      : Colors.white,
+                  size: 26.sp,
                 ),
               )),
               SizedBox(width: 8.w),
-              _iconBtn(Icons.image_outlined, () => controller.pickImage()),
+              GestureDetector(
+                onTap: () => controller.pickImage(),
+                child: Icon(Icons.image_outlined,
+                    color: Colors.white, size: 26.sp),
+              ),
               SizedBox(width: 8.w),
               Expanded(
                 child: Container(
@@ -540,13 +778,16 @@ class MainChatScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.14),
                     borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(color: Colors.white.withOpacity(0.20)),
+                    border: Border.all(
+                        color: Colors.white.withOpacity(0.20)),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  padding:
+                  EdgeInsets.symmetric(horizontal: 14.w),
                   alignment: Alignment.center,
                   child: TextField(
                     controller: controller.inputController,
-                    style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                    style: TextStyle(
+                        color: Colors.white, fontSize: 14.sp),
                     onSubmitted: (_) => controller.sendMessage(),
                     decoration: InputDecoration(
                       border: InputBorder.none,
@@ -563,7 +804,9 @@ class MainChatScreen extends StatelessWidget {
               ),
               SizedBox(width: 8.w),
               Obx(() => GestureDetector(
-                onTap: controller.isLoading.value ? null : controller.sendMessage,
+                onTap: controller.isLoading.value
+                    ? null
+                    : controller.sendMessage,
                 child: controller.isLoading.value
                     ? SizedBox(
                   width: 24.w,
@@ -576,7 +819,8 @@ class MainChatScreen extends StatelessWidget {
                     : Transform.rotate(
                   angle: -0.3,
                   child: Icon(Icons.send_rounded,
-                      color: Colors.white, size: 24.sp),
+                      color: Colors.white,
+                      size: 24.sp),
                 ),
               )),
             ],
@@ -586,13 +830,6 @@ class MainChatScreen extends StatelessWidget {
     );
   }
 
-  Widget _iconBtn(IconData icon, VoidCallback onTap) => GestureDetector(
-    onTap: onTap,
-    child: Icon(icon, color: Colors.white, size: 26.sp),
-  );
-
-  /// Very light LaTeX cleanup — replaces common markers with readable text.
-  /// Replace with flutter_math_fork for full rendering.
   String _cleanLatex(String raw) {
     return raw
         .replaceAll(r'\n', '\n')
@@ -610,13 +847,158 @@ class MainChatScreen extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-//  ANIMATED SPARKLE  (StatefulWidget — kept small & local)
-// ─────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+//  SESSION TILE  (swipe to delete + long-press to rename)
+// ══════════════════════════════════════════════════════════
+class _SessionTile extends StatelessWidget {
+  final ChatSession session;
+  final bool isActive;
+  final VoidCallback onTap;
+  final VoidCallback onRename;
+  final VoidCallback onDelete;
+
+  const _SessionTile({
+    required this.session,
+    required this.isActive,
+    required this.onTap,
+    required this.onRename,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: Key("session_${session.id}"),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.only(right: 16.w),
+        margin: EdgeInsets.only(bottom: 4.h),
+        decoration: BoxDecoration(
+          color: Colors.red.shade400,
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Icon(Icons.delete_outline,
+            color: Colors.white, size: 22.sp),
+      ),
+      confirmDismiss: (_) async {
+        onDelete();
+        return false; // controller handles removal
+      },
+      child: GestureDetector(
+        onLongPress: onRename,
+        child: Container(
+          margin: EdgeInsets.only(bottom: 4.h),
+          decoration: BoxDecoration(
+            color: isActive
+                ? const Color(0xff2F3E5B).withOpacity(0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(10.r),
+          ),
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.symmetric(
+                horizontal: 12.w, vertical: 2.h),
+            leading: Container(
+              width: 34.w,
+              height: 34.w,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? const Color(0xff2F3E5B)
+                    : const Color(0xff2F3E5B).withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 15.sp,
+                color: isActive
+                    ? Colors.white
+                    : const Color(0xff2F3E5B),
+              ),
+            ),
+            title: Text(
+              session.title ?? "Chat #${session.id}",
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: isActive
+                    ? FontWeight.w600
+                    : FontWeight.w400,
+                color: isActive
+                    ? const Color(0xff2F3E5B)
+                    : Colors.black87,
+              ),
+            ),
+            subtitle: Text(
+              _formatDate(session.createdAt),
+              style: TextStyle(
+                  fontSize: 11.sp, color: Colors.black38),
+            ),
+            trailing: PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert,
+                  size: 18.sp, color: Colors.black38),
+              onSelected: (val) {
+                if (val == 'rename') onRename();
+                if (val == 'delete') onDelete();
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'rename',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_outlined,
+                          size: 16.sp, color: Colors.black54),
+                      SizedBox(width: 8.w),
+                      const Text("Rename"),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline,
+                          size: 16.sp, color: Colors.red),
+                      SizedBox(width: 8.w),
+                      const Text("Delete",
+                          style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            onTap: onTap,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(String iso) {
+    try {
+      final dt  = DateTime.parse(iso).toLocal();
+      final now = DateTime.now();
+      if (dt.year == now.year &&
+          dt.month == now.month &&
+          dt.day == now.day) return "Today";
+      const months = [
+        '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      return "${months[dt.month]} ${dt.day}";
+    } catch (_) {
+      return "";
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  ANIMATED SPARKLE
+// ══════════════════════════════════════════════════════════
 class _AnimatedSparkle extends StatefulWidget {
   final _SparkleData data;
   const _AnimatedSparkle({required this.data});
-
   @override
   State<_AnimatedSparkle> createState() => _AnimatedSparkleState();
 }
@@ -631,14 +1013,16 @@ class _AnimatedSparkleState extends State<_AnimatedSparkle>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 1600 + widget.data.delay ~/ 2),
+      duration:
+      Duration(milliseconds: 1600 + widget.data.delay ~/ 2),
     );
     _anim = Tween<double>(begin: 0.25, end: 1.0).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
     );
-    Future.delayed(Duration(milliseconds: widget.data.delay), () {
-      if (mounted) _ctrl.repeat(reverse: true);
-    });
+    Future.delayed(Duration(milliseconds: widget.data.delay),
+            () {
+          if (mounted) _ctrl.repeat(reverse: true);
+        });
   }
 
   @override
@@ -656,21 +1040,19 @@ class _AnimatedSparkleState extends State<_AnimatedSparkle>
         child: Transform.scale(
           scale: 0.75 + _anim.value * 0.25,
           child: _Sparkle(
-            size:  widget.data.size.toDouble(),
-            color: widget.data.color,
-          ),
+              size: widget.data.size.toDouble(),
+              color: widget.data.color),
         ),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────
-//  TYPING DOTS  (animated "..." indicator)
-// ─────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+//  TYPING DOTS
+// ══════════════════════════════════════════════════════════
 class _TypingDots extends StatefulWidget {
   const _TypingDots();
-
   @override
   State<_TypingDots> createState() => _TypingDotsState();
 }
@@ -704,9 +1086,11 @@ class _TypingDotsState extends State<_TypingDots>
           mainAxisSize: MainAxisSize.min,
           children: List.generate(3, (i) {
             final phase = (t - i * 0.25).clamp(0.0, 1.0);
-            final opacity = (math.sin(phase * math.pi)).clamp(0.3, 1.0);
+            final opacity =
+            (math.sin(phase * math.pi)).clamp(0.3, 1.0);
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 2),
               child: Opacity(
                 opacity: opacity,
                 child: Container(
@@ -726,9 +1110,9 @@ class _TypingDotsState extends State<_TypingDots>
   }
 }
 
-// ─────────────────────────────────────────────────────────
-//  4-POINT SPARKLE  (CustomPainter — unchanged)
-// ─────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+//  SPARKLE PAINTER
+// ══════════════════════════════════════════════════════════
 class _Sparkle extends StatelessWidget {
   final double size;
   final Color  color;
@@ -748,19 +1132,17 @@ class _SparklePainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-
     final cx    = size.width  / 2;
     final cy    = size.height / 2;
     final outer = size.width  / 2;
     final inner = outer * 0.22;
-
-    final path = Path();
+    final path  = Path();
     for (int i = 0; i < 8; i++) {
-      final angleDeg = i * 45.0 - 90.0;
-      final angleRad = angleDeg * math.pi / 180.0;
+      final angle =
+          (i * 45.0 - 90.0) * math.pi / 180.0;
       final r = i.isEven ? outer : inner;
-      final x = cx + r * math.cos(angleRad);
-      final y = cy + r * math.sin(angleRad);
+      final x = cx + r * math.cos(angle);
+      final y = cy + r * math.sin(angle);
       i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
     }
     path.close();
@@ -768,24 +1150,21 @@ class _SparklePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_SparklePainter old) => old.color != color;
+  bool shouldRepaint(_SparklePainter old) =>
+      old.color != color;
 }
 
-// ─────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
 //  DATA CLASS
-// ─────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
 class _SparkleData {
-  final double dx;
-  final double dy;
-  final int    size;
+  final double dx, dy;
+  final int    size, delay;
   final Color  color;
-  final int    delay;
-
-  const _SparkleData({
-    required this.dx,
-    required this.dy,
-    required this.size,
-    required this.color,
-    required this.delay,
-  });
+  const _SparkleData(
+      {required this.dx,
+        required this.dy,
+        required this.size,
+        required this.color,
+        required this.delay});
 }
