@@ -67,9 +67,8 @@ class ApiServices {
     return _handleResponse(response, url, endpoints);
   }
 
-  Future<dynamic> postMultipart({
-    required String endpoint,
-    required Map<String, String> headers,
+
+  Future<dynamic> postMultipart({required String endpoint, required Map<String, String> headers,
     required Map<String, String> fields,
     File? file,
     String fileField = "image",

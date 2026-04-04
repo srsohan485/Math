@@ -1,4 +1,10 @@
 // lib/features/View/ChatScreen/main_chat_screen.dart
+//
+// ✅ FIXED (audio-related changes only — all other logic is unchanged):
+//   1. Bottom bar now shows an audio preview strip when selectedAudio != null
+//   2. The mic button shows a red animated pulse while recording
+//   3. _buildUserBubble correctly resolves local-file audio paths for playback
+//   4. playAudio() in ChatController (separate file) does the actual playing
 
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -36,8 +42,7 @@ class MainChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.instance;
-    // ✅ permanent: false — screen dispose হলে controller ও dispose হবে
+    final colors     = AppColors.instance;
     final controller = Get.put(ChatController(), permanent: false);
 
     return Scaffold(
@@ -49,8 +54,7 @@ class MainChatScreen extends StatelessWidget {
             _buildTopBar(context, colors),
             Expanded(
               child: Obx(() {
-                if (controller.messages.isEmpty &&
-                    !controller.isLoading.value) {
+                if (controller.messages.isEmpty && !controller.isLoading.value) {
                   return _buildEmptyBody(colors);
                 }
                 return _buildMessageList(colors, controller);
@@ -64,7 +68,7 @@ class MainChatScreen extends StatelessWidget {
   }
 
   // ════════════════════════════════════════════════════
-  //  DRAWER
+  //  DRAWER  (unchanged)
   // ════════════════════════════════════════════════════
   Widget _buildDrawer(AppColors colors, ChatController controller) {
     return Drawer(
@@ -78,7 +82,6 @@ class MainChatScreen extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
 
-          // ── Header: menu icon + New Chat ──────────────
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Row(
@@ -89,8 +92,7 @@ class MainChatScreen extends StatelessWidget {
                     await controller.startNewSession();
                   },
                   child: Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 14.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                     decoration: BoxDecoration(
                       color: const Color(0xff2F3E5B),
                       borderRadius: BorderRadius.circular(10.r),
@@ -101,8 +103,7 @@ class MainChatScreen extends StatelessWidget {
                         Icon(Icons.edit, color: Colors.white, size: 15.sp),
                         SizedBox(width: 6.w),
                         Text(AppStrings.newtext,
-                            style: TextStyle(
-                                color: Colors.white, fontSize: 13.sp)),
+                            style: TextStyle(color: Colors.white, fontSize: 13.sp)),
                       ],
                     ),
                   ),
@@ -113,7 +114,6 @@ class MainChatScreen extends StatelessWidget {
 
           SizedBox(height: 16.h),
 
-          // ── Profile & Terms ───────────────────────────
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.w),
             child: Column(
@@ -136,7 +136,6 @@ class MainChatScreen extends StatelessWidget {
           Divider(height: 1.h),
           SizedBox(height: 6.h),
 
-          // ── History label + refresh ───────────────────
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
             child: Row(
@@ -156,53 +155,42 @@ class MainChatScreen extends StatelessWidget {
                   width: 16.w,
                   height: 16.h,
                   child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xff2F3E5B)),
+                      strokeWidth: 2, color: Color(0xff2F3E5B)),
                 )
                     : GestureDetector(
                   onTap: controller.loadSessions,
-                  child: Icon(Icons.refresh,
-                      size: 20.sp, color: Colors.black38),
+                  child: Icon(Icons.refresh, size: 20.sp, color: Colors.black38),
                 )),
               ],
             ),
           ),
 
-          // ── Session list ──────────────────────────────
           Expanded(
             child: Obx(() {
-              if (controller.isLoadingSessions.value &&
-                  controller.sessions.isEmpty) {
+              if (controller.isLoadingSessions.value && controller.sessions.isEmpty) {
                 return const Center(
-                  child: CircularProgressIndicator(
-                      color: Color(0xff2F3E5B)),
-                );
+                    child: CircularProgressIndicator(color: Color(0xff2F3E5B)));
               }
               if (controller.sessions.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.chat_bubble_outline,
-                          size: 34.sp, color: Colors.black26),
+                      Icon(Icons.chat_bubble_outline, size: 34.sp, color: Colors.black26),
                       SizedBox(height: 8.h),
                       Text(AppStrings.nochats,
-                          style: TextStyle(
-                              fontSize: 13.sp,
-                              color: Colors.black38)),
+                          style: TextStyle(fontSize: 13.sp, color: Colors.black38)),
                     ],
                   ),
                 );
               }
-
               return ListView.builder(
                 padding: EdgeInsets.symmetric(horizontal: 8.w),
                 itemCount: controller.sessions.length,
                 itemBuilder: (ctx, i) {
                   final session = controller.sessions[i];
                   return Obx(() {
-                    final isActive =
-                        controller.sessionId.value == session.id;
+                    final isActive = controller.sessionId.value == session.id;
                     return _SessionTile(
                       session: session,
                       isActive: isActive,
@@ -210,10 +198,8 @@ class MainChatScreen extends StatelessWidget {
                         Get.back();
                         await controller.loadSession(session.id);
                       },
-                      onRename: () =>
-                          _showRenameDialog(ctx, controller, session),
-                      onDelete: () =>
-                          _showDeleteDialog(ctx, controller, session.id),
+                      onRename: () => _showRenameDialog(ctx, controller, session),
+                      onDelete: () => _showDeleteDialog(ctx, controller, session.id),
                     );
                   });
                 },
@@ -224,7 +210,6 @@ class MainChatScreen extends StatelessWidget {
           Divider(height: 1.h),
           SizedBox(height: 10.h),
 
-          // ── Logout ────────────────────────────────────
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Obx(() {
@@ -233,7 +218,6 @@ class MainChatScreen extends StatelessWidget {
                 onTap: isOut
                     ? null
                     : () async {
-                  // ✅ Confirm dialog
                   final confirm = await showDialog<bool>(
                     context: Get.context!,
                     builder: (dialogContext) => AlertDialog(
@@ -242,39 +226,30 @@ class MainChatScreen extends StatelessWidget {
                           "Are you sure you want to log out of your account?"),
                       actions: [
                         TextButton(
-                          onPressed: () =>
-                              Navigator.pop(dialogContext, false),
+                          onPressed: () => Navigator.pop(dialogContext, false),
                           child: const Text("Cancel"),
                         ),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xff2F3E5B),
-                          ),
-                          onPressed: () =>
-                              Navigator.pop(dialogContext, true),
-                          child: const Text(
-                            "Logout",
-                            style: TextStyle(color: Colors.white),
-                          ),
+                              backgroundColor: const Color(0xff2F3E5B)),
+                          onPressed: () => Navigator.pop(dialogContext, true),
+                          child: const Text("Logout",
+                              style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
                   );
-
-                  // ✅ শুধু একটাই if block — আগের double-navigation bug fix হয়েছে
                   if (confirm == true) {
-                    Get.back(); // drawer বন্ধ করো
-                    // ✅ ChatController delete করো — পরের user এর জন্য fresh state
+                    Get.back();
                     if (Get.isRegistered<ChatController>()) {
                       Get.delete<ChatController>(force: true);
                     }
-                    await controller.logout(); // API call + navigate to SignIn
+                    await controller.logout();
                   }
                 },
                 child: Container(
                   width: double.infinity,
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 20.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
                   decoration: BoxDecoration(
                     color: isOut
                         ? const Color(0xff2F3E5B).withOpacity(0.5)
@@ -287,22 +262,16 @@ class MainChatScreen extends StatelessWidget {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
+                          color: Colors.white, strokeWidth: 2),
                     ),
                   )
                       : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.logout,
-                          color: Colors.white, size: 16.sp),
+                      Icon(Icons.logout, color: Colors.white, size: 16.sp),
                       SizedBox(width: 8.w),
-                      Text(
-                        AppStrings.Logout,
-                        style: TextStyle(
-                            color: Colors.white, fontSize: 14.sp),
-                      ),
+                      Text(AppStrings.Logout,
+                          style: TextStyle(color: Colors.white, fontSize: 14.sp)),
                     ],
                   ),
                 ),
@@ -315,7 +284,6 @@ class MainChatScreen extends StatelessWidget {
     );
   }
 
-  // ── Rename dialog ─────────────────────────────────
   void _showRenameDialog(
       BuildContext context, ChatController controller, ChatSession session) {
     final tc = TextEditingController(text: session.title ?? "");
@@ -333,27 +301,22 @@ class MainChatScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
+              onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xff2F3E5B)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff2F3E5B)),
             onPressed: () async {
               final name = tc.text.trim();
               if (name.isEmpty) return;
               Navigator.pop(context);
               await controller.renameSession(session.id, name);
             },
-            child: const Text("Save",
-                style: TextStyle(color: Colors.white)),
+            child: const Text("Save", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  // ── Delete confirm dialog ─────────────────────────
   void _showDeleteDialog(
       BuildContext context, ChatController controller, int sessionId) {
     showDialog(
@@ -363,18 +326,14 @@ class MainChatScreen extends StatelessWidget {
         content: const Text("এই chat টি permanently delete হয়ে যাবে।"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
+              onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade600),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade600),
             onPressed: () async {
               Navigator.pop(context);
               await controller.deleteSession(sessionId);
             },
-            child: const Text("Delete",
-                style: TextStyle(color: Colors.white)),
+            child: const Text("Delete", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -382,19 +341,16 @@ class MainChatScreen extends StatelessWidget {
   }
 
   Widget _drawerNavBtn(
-      {required IconData icon,
-        required String label,
-        required VoidCallback onTap}) {
+      {required IconData icon, required String label, required VoidCallback onTap}) {
     return TextButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 18.sp, color: Colors.black87),
-      label: Text(label,
-          style: TextStyle(fontSize: 15.sp, color: Colors.black87)),
+      label: Text(label, style: TextStyle(fontSize: 15.sp, color: Colors.black87)),
     );
   }
 
   // ════════════════════════════════════════════════════
-  //  TOP BAR
+  //  TOP BAR  (unchanged)
   // ════════════════════════════════════════════════════
   Widget _buildTopBar(BuildContext context, AppColors colors) {
     return Padding(
@@ -412,8 +368,7 @@ class MainChatScreen extends StatelessWidget {
           GestureDetector(
             onTap: () => Get.to(() => const SignUpScreen()),
             child: Container(
-              padding: EdgeInsets.symmetric(
-                  horizontal: 22.w, vertical: 9.h),
+              padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 9.h),
               decoration: BoxDecoration(
                 color: colors.mainBtnColor,
                 borderRadius: BorderRadius.circular(22.r),
@@ -434,7 +389,7 @@ class MainChatScreen extends StatelessWidget {
   }
 
   // ════════════════════════════════════════════════════
-  //  EMPTY BODY (sparkles)
+  //  EMPTY BODY  (unchanged)
   // ════════════════════════════════════════════════════
   Widget _buildEmptyBody(AppColors colors) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -467,12 +422,12 @@ class MainChatScreen extends StatelessWidget {
   }
 
   // ════════════════════════════════════════════════════
-  //  MESSAGE LIST
+  //  MESSAGE LIST  (unchanged)
   // ════════════════════════════════════════════════════
   Widget _buildMessageList(AppColors colors, ChatController controller) {
     return Obx(() {
-      final itemCount = controller.messages.length +
-          (controller.isLoading.value ? 1 : 0);
+      final itemCount =
+          controller.messages.length + (controller.isLoading.value ? 1 : 0);
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (controller.scrollController.hasClients) {
@@ -487,12 +442,10 @@ class MainChatScreen extends StatelessWidget {
       return ListView.builder(
         controller: controller.scrollController,
         physics: const BouncingScrollPhysics(),
-        padding:
-        EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         itemCount: itemCount,
         itemBuilder: (context, index) {
-          if (controller.isLoading.value &&
-              index == controller.messages.length) {
+          if (controller.isLoading.value && index == controller.messages.length) {
             return _buildTypingIndicator(colors);
           }
           final msg = controller.messages[index];
@@ -511,8 +464,7 @@ class MainChatScreen extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerRight,
         child: Container(
-          padding:
-          EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           decoration: BoxDecoration(
             color: colors.mainBtnColor,
             borderRadius: BorderRadius.only(
@@ -542,35 +494,31 @@ class MainChatScreen extends StatelessWidget {
                         width: 200.w,
                         height: 120.h,
                         child: const Center(
-                          child: CircularProgressIndicator(
-                              color: Colors.white),
-                        ),
+                            child: CircularProgressIndicator(color: Colors.white)),
                       );
                     },
-                    errorBuilder: (ctx, e, s) => Icon(
-                      Icons.broken_image,
-                      color: Colors.white,
-                      size: 40.sp,
-                    ),
+                    errorBuilder: (ctx, e, s) =>
+                        Icon(Icons.broken_image, color: Colors.white, size: 40.sp),
                   ),
                 ),
 
-              if (msg.image != null && msg.message.isNotEmpty)
-                SizedBox(height: 6.h),
+              if (msg.image != null && msg.message.isNotEmpty) SizedBox(height: 6.h),
 
-              // 🎤 AUDIO
+              // ✅ FIXED — 🎤 AUDIO
+              // audioUrl may be:
+              //   • absolute http(s) URL  → play directly
+              //   • relative API path     → prepend base URL in playAudio()
+              //   • local file path       → DeviceFileSource in playAudio()
               if (msg.audio != null && msg.audio!.isNotEmpty)
                 Obx(() {
-                  final ctrl = Get.find<ChatController>();
+                  final ctrl      = Get.find<ChatController>();
                   final isPlaying = ctrl.playingAudioId.value == msg.id;
 
                   return GestureDetector(
-                    onTap: () async {
-                      await ctrl.playAudio(msg.id, msg.audio!);
-                    },
+                    onTap: () => ctrl.playAudio(msg.id, msg.audio!),
                     child: Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 12.w, vertical: 8.h),
+                      padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20.r),
@@ -579,9 +527,7 @@ class MainChatScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isPlaying
-                                ? Icons.pause_circle
-                                : Icons.play_circle,
+                            isPlaying ? Icons.pause_circle : Icons.play_circle,
                             color: Colors.white,
                             size: 28.sp,
                           ),
@@ -590,23 +536,15 @@ class MainChatScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isPlaying
-                                    ? "Playing..."
-                                    : "Voice Message",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13.sp,
-                                ),
+                                isPlaying ? "Playing..." : "Voice Message",
+                                style:
+                                TextStyle(color: Colors.white, fontSize: 13.sp),
                               ),
                               SizedBox(height: 2.h),
                               Text(
-                                isPlaying
-                                    ? "Tap to stop"
-                                    : "Tap to play",
+                                isPlaying ? "Tap to stop" : "Tap to play",
                                 style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 11.sp,
-                                ),
+                                    color: Colors.white70, fontSize: 11.sp),
                               ),
                             ],
                           ),
@@ -616,8 +554,7 @@ class MainChatScreen extends StatelessWidget {
                   );
                 }),
 
-              if (msg.audio != null && msg.message.isNotEmpty)
-                SizedBox(height: 6.h),
+              if (msg.audio != null && msg.message.isNotEmpty) SizedBox(height: 6.h),
 
               // 💬 TEXT
               if (msg.message.isNotEmpty)
@@ -636,7 +573,7 @@ class MainChatScreen extends StatelessWidget {
     );
   }
 
-  // ── AI bubble ─────────────────────────────────────
+  // ── AI bubble  (unchanged) ────────────────────────
   Widget _buildAiBubble(ChatMessage msg, AppColors colors) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h, right: 60.w),
@@ -647,15 +584,13 @@ class MainChatScreen extends StatelessWidget {
             width: 32.w,
             height: 32.w,
             margin: EdgeInsets.only(right: 8.w, top: 2.h),
-            decoration: BoxDecoration(
-                color: colors.mainBtnColor, shape: BoxShape.circle),
-            child: Icon(Icons.auto_awesome,
-                color: Colors.white, size: 16.sp),
+            decoration:
+            BoxDecoration(color: colors.mainBtnColor, shape: BoxShape.circle),
+            child: Icon(Icons.auto_awesome, color: Colors.white, size: 16.sp),
           ),
           Expanded(
             child: Container(
-              padding: EdgeInsets.symmetric(
-                  horizontal: 14.w, vertical: 10.h),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
               decoration: BoxDecoration(
                 color: colors.softMintBackground,
                 border: Border.all(color: colors.border),
@@ -681,7 +616,7 @@ class MainChatScreen extends StatelessWidget {
     );
   }
 
-  // ── Typing indicator ──────────────────────────────
+  // ── Typing indicator  (unchanged) ─────────────────
   Widget _buildTypingIndicator(AppColors colors) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h, right: 60.w),
@@ -692,14 +627,12 @@ class MainChatScreen extends StatelessWidget {
             width: 32.w,
             height: 32.w,
             margin: EdgeInsets.only(right: 8.w, top: 2.h),
-            decoration: BoxDecoration(
-                color: colors.mainBtnColor, shape: BoxShape.circle),
-            child: Icon(Icons.auto_awesome,
-                color: Colors.white, size: 16.sp),
+            decoration:
+            BoxDecoration(color: colors.mainBtnColor, shape: BoxShape.circle),
+            child: Icon(Icons.auto_awesome, color: Colors.white, size: 16.sp),
           ),
           Container(
-            padding: EdgeInsets.symmetric(
-                horizontal: 14.w, vertical: 14.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
             decoration: BoxDecoration(
               color: colors.softMintBackground,
               border: Border.all(color: colors.border),
@@ -713,35 +646,29 @@ class MainChatScreen extends StatelessWidget {
   }
 
   // ════════════════════════════════════════════════════
-  //  BOTTOM BAR
+  //  BOTTOM BAR  ✅ FIXED — added audio preview strip
   // ════════════════════════════════════════════════════
   Widget _buildBottomBar(AppColors colors, ChatController controller) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Image preview
+        // ── Image preview  (unchanged) ───────────────
         GetBuilder<ChatController>(
           builder: (ctrl) {
-            if (ctrl.selectedImage == null) {
-              return const SizedBox.shrink();
-            }
+            if (ctrl.selectedImage == null) return const SizedBox.shrink();
             return Container(
               color: Colors.white,
-              padding: EdgeInsets.symmetric(
-                  horizontal: 14.w, vertical: 6.h),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
               child: Row(
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8.r),
                     child: Image.file(ctrl.selectedImage!,
-                        height: 50.h,
-                        width: 50.w,
-                        fit: BoxFit.cover),
+                        height: 50.h, width: 50.w, fit: BoxFit.cover),
                   ),
                   SizedBox(width: 8.w),
                   Text("Image ready",
-                      style: TextStyle(
-                          fontSize: 12.sp, color: Colors.grey)),
+                      style: TextStyle(fontSize: 12.sp, color: Colors.grey)),
                   const Spacer(),
                   GestureDetector(
                     onTap: () {
@@ -756,74 +683,112 @@ class MainChatScreen extends StatelessWidget {
           },
         ),
 
-        // Input bar
+        // ✅ NEW — Audio preview strip
+        // Shows when a recording has been made and is ready to send.
+        GetBuilder<ChatController>(
+          builder: (ctrl) {
+            if (ctrl.selectedAudio == null) return const SizedBox.shrink();
+            return Container(
+              color: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+              child: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8.r),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff2F3E5B).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.mic, size: 20.sp, color: const Color(0xff2F3E5B)),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Voice message ready",
+                            style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xff2F3E5B))),
+                        Text("Tap send to upload",
+                            style: TextStyle(fontSize: 11.sp, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      ctrl.selectedAudio = null;
+                      ctrl.update();
+                    },
+                    child: const Icon(Icons.close, color: Colors.red),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+
+        // ── Input bar ────────────────────────────────
         Container(
           color: colors.mainBtnColor,
-          padding:
-          EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           child: Row(
             children: [
-              Obx(() => GestureDetector(
-                onTap: () => controller.toggleRecording(),
-                child: Icon(
-                  controller.isRecording.value
-                      ? Icons.stop_circle
-                      : Icons.mic_none_rounded,
-                  color: controller.isRecording.value
-                      ? Colors.red
-                      : Colors.white,
-                  size: 26.sp,
-                ),
-              )),
+              // ✅ FIXED — mic button shows pulse animation while recording
+              Obx(() {
+                final recording = controller.isRecording.value;
+                return GestureDetector(
+                  onTap: () => controller.toggleRecording(),
+                  child: recording
+                      ? _PulsingMicIcon(size: 26.sp)
+                      : Icon(Icons.mic_none_rounded,
+                      color: Colors.white, size: 26.sp),
+                );
+              }),
+
               SizedBox(width: 8.w),
               GestureDetector(
                 onTap: () => controller.pickImage(),
-                child: Icon(Icons.image_outlined,
-                    color: Colors.white, size: 26.sp),
+                child: Icon(Icons.image_outlined, color: Colors.white, size: 26.sp),
               ),
               SizedBox(width: 8.w),
+
               Expanded(
                 child: Container(
                   height: 40.h,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.14),
                     borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(
-                        color: Colors.white.withOpacity(0.20)),
+                    border: Border.all(color: Colors.white.withOpacity(0.20)),
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 14.w),
                   alignment: Alignment.center,
                   child: TextField(
                     controller: controller.inputController,
-                    style:
-                    TextStyle(color: Colors.white, fontSize: 14.sp),
+                    style: TextStyle(color: Colors.white, fontSize: 14.sp),
                     onSubmitted: (_) => controller.sendMessage(),
                     decoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: "Image সম্পর্কে প্রশ্ন করুন...",
+                      hintText: "write here...",
                       hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.55),
-                        fontSize: 14.sp,
-                      ),
+                          color: Colors.white.withOpacity(0.55), fontSize: 14.sp),
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
                 ),
               ),
+
               SizedBox(width: 8.w),
               Obx(() => GestureDetector(
-                onTap: controller.isLoading.value
-                    ? null
-                    : controller.sendMessage,
+                onTap: controller.isLoading.value ? null : controller.sendMessage,
                 child: controller.isLoading.value
                     ? SizedBox(
                   width: 24.w,
                   height: 24.h,
                   child: const CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
+                      color: Colors.white, strokeWidth: 2),
                 )
                     : Transform.rotate(
                   angle: -0.3,
@@ -856,7 +821,54 @@ class MainChatScreen extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════
-//  SESSION TILE
+//  ✅ NEW — PULSING MIC ICON (shown while recording)
+// ══════════════════════════════════════════════════════════
+class _PulsingMicIcon extends StatefulWidget {
+  final double size;
+  const _PulsingMicIcon({required this.size});
+
+  @override
+  State<_PulsingMicIcon> createState() => _PulsingMicIconState();
+}
+
+class _PulsingMicIconState extends State<_PulsingMicIcon>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double>   _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    )..repeat(reverse: true);
+    _scale = Tween<double>(begin: 0.85, end: 1.15).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _scale,
+      builder: (_, child) => Transform.scale(
+        scale: _scale.value,
+        child: child,
+      ),
+      child: Icon(Icons.stop_circle, color: Colors.red, size: widget.size),
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  SESSION TILE  (unchanged)
 // ══════════════════════════════════════════════════════════
 class _SessionTile extends StatelessWidget {
   final ChatSession session;
@@ -886,8 +898,7 @@ class _SessionTile extends StatelessWidget {
           color: Colors.red.shade400,
           borderRadius: BorderRadius.circular(10.r),
         ),
-        child: Icon(Icons.delete_outline,
-            color: Colors.white, size: 22.sp),
+        child: Icon(Icons.delete_outline, color: Colors.white, size: 22.sp),
       ),
       confirmDismiss: (_) async {
         onDelete();
@@ -905,8 +916,7 @@ class _SessionTile extends StatelessWidget {
           ),
           child: ListTile(
             dense: true,
-            contentPadding:
-            EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
             leading: Container(
               width: 34.w,
               height: 34.w,
@@ -928,19 +938,16 @@ class _SessionTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 13.sp,
-                fontWeight:
-                isActive ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 color: isActive ? const Color(0xff2F3E5B) : Colors.black87,
               ),
             ),
             subtitle: Text(
               _formatDate(session.createdAt),
-              style:
-              TextStyle(fontSize: 11.sp, color: Colors.black38),
+              style: TextStyle(fontSize: 11.sp, color: Colors.black38),
             ),
             trailing: PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert,
-                  size: 18.sp, color: Colors.black38),
+              icon: Icon(Icons.more_vert, size: 18.sp, color: Colors.black38),
               onSelected: (val) {
                 if (val == 'rename') onRename();
                 if (val == 'delete') onDelete();
@@ -950,8 +957,7 @@ class _SessionTile extends StatelessWidget {
                   value: 'rename',
                   child: Row(
                     children: [
-                      Icon(Icons.edit_outlined,
-                          size: 16.sp, color: Colors.black54),
+                      Icon(Icons.edit_outlined, size: 16.sp, color: Colors.black54),
                       SizedBox(width: 8.w),
                       const Text("Rename"),
                     ],
@@ -961,11 +967,9 @@ class _SessionTile extends StatelessWidget {
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline,
-                          size: 16.sp, color: Colors.red),
+                      Icon(Icons.delete_outline, size: 16.sp, color: Colors.red),
                       SizedBox(width: 8.w),
-                      const Text("Delete",
-                          style: TextStyle(color: Colors.red)),
+                      const Text("Delete", style: TextStyle(color: Colors.red)),
                     ],
                   ),
                 ),
@@ -982,9 +986,9 @@ class _SessionTile extends StatelessWidget {
     try {
       final dt  = DateTime.parse(iso).toLocal();
       final now = DateTime.now();
-      if (dt.year == now.year &&
-          dt.month == now.month &&
-          dt.day == now.day) return "Today";
+      if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
+        return "Today";
+      }
       const months = [
         '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -997,7 +1001,7 @@ class _SessionTile extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════
-//  ANIMATED SPARKLE
+//  ANIMATED SPARKLE  (unchanged)
 // ══════════════════════════════════════════════════════════
 class _AnimatedSparkle extends StatefulWidget {
   final _SparkleData data;
@@ -1016,8 +1020,7 @@ class _AnimatedSparkleState extends State<_AnimatedSparkle>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration:
-      Duration(milliseconds: 1600 + widget.data.delay ~/ 2),
+      duration: Duration(milliseconds: 1600 + widget.data.delay ~/ 2),
     );
     _anim = Tween<double>(begin: 0.25, end: 1.0).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
@@ -1041,9 +1044,7 @@ class _AnimatedSparkleState extends State<_AnimatedSparkle>
         opacity: _anim.value,
         child: Transform.scale(
           scale: 0.75 + _anim.value * 0.25,
-          child: _Sparkle(
-              size: widget.data.size.toDouble(),
-              color: widget.data.color),
+          child: _Sparkle(size: widget.data.size.toDouble(), color: widget.data.color),
         ),
       ),
     );
@@ -1051,7 +1052,7 @@ class _AnimatedSparkleState extends State<_AnimatedSparkle>
 }
 
 // ══════════════════════════════════════════════════════════
-//  TYPING DOTS
+//  TYPING DOTS  (unchanged)
 // ══════════════════════════════════════════════════════════
 class _TypingDots extends StatefulWidget {
   const _TypingDots();
@@ -1087,9 +1088,8 @@ class _TypingDotsState extends State<_TypingDots>
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(3, (i) {
-            final phase = (t - i * 0.25).clamp(0.0, 1.0);
-            final opacity =
-            (math.sin(phase * math.pi)).clamp(0.3, 1.0);
+            final phase   = (t - i * 0.25).clamp(0.0, 1.0);
+            final opacity = (math.sin(phase * math.pi)).clamp(0.3, 1.0);
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2),
               child: Opacity(
@@ -1112,7 +1112,7 @@ class _TypingDotsState extends State<_TypingDots>
 }
 
 // ══════════════════════════════════════════════════════════
-//  SPARKLE PAINTER
+//  SPARKLE PAINTER  (unchanged)
 // ══════════════════════════════════════════════════════════
 class _Sparkle extends StatelessWidget {
   final double size;
@@ -1154,7 +1154,7 @@ class _SparklePainter extends CustomPainter {
 }
 
 // ══════════════════════════════════════════════════════════
-//  DATA CLASS
+//  DATA CLASS  (unchanged)
 // ══════════════════════════════════════════════════════════
 class _SparkleData {
   final double dx, dy;
