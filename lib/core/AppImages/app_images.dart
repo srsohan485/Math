@@ -15,6 +15,7 @@ class AppImages {
   //
   static const String apple = "assets/images/apple_logo.png";
   static const String google = "assets/images/google_logo.png";
+  static const String sohan = "assets/images/sohan.png";
 
 
 }

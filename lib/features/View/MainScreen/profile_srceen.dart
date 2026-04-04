@@ -57,7 +57,7 @@ class ProfileScreen extends StatelessWidget {
                     controller.profilePicture.value.isNotEmpty
                         ? NetworkImage(controller.profilePicture.value)
                     as ImageProvider
-                        : AssetImage(AppImages.Centerlogo2),
+                        : AssetImage(AppImages.sohan),
                     backgroundColor: c.border,
                   ),
                   SizedBox(width: 12.w),
