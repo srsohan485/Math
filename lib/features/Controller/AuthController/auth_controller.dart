@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/AppImages/app_images.dart';
-import '../../../core/services/AuthService/auth_service.dart'; // ← ADD THIS
+import '../../../core/services/AuthService/auth_service.dart';
 import '../../../core/storege/storage_service.dart';
 import '../../View/AuthScreen/enterotp_screen.dart';
 import '../../View/AuthScreen/forgot_password.dart';
@@ -10,6 +10,7 @@ import '../../View/AuthScreen/reset_password.dart';
 import '../../View/AuthScreen/singin_screen.dart';
 import '../../View/AuthScreen/singup_srceen.dart';
 import '../../View/MainScreen/chart_screen.dart';
+import '../ChatController/chat_controller.dart';
 
 class AuthController extends GetxController {
   // ─── Text Controllers ───────────────────────────────
@@ -133,7 +134,7 @@ class AuthController extends GetxController {
   }
 
   // ════════════════════════════════════════════════════
-  //  Sign In  ← UPDATED: saves user info to storage
+  //  Sign In
   // ════════════════════════════════════════════════════
   Future<void> login() async {
     final email    = emailController.text.trim();
@@ -151,13 +152,12 @@ class AuthController extends GetxController {
       );
 
       if (result["success"] == true) {
-        // ── Save user info so ProfileScreen shows correct data ──
         final data = result["data"];
         if (data is Map) {
           final accessToken  = data["access"]  ?? data["token"]  ?? '';
           final refreshToken = data["refresh"] ?? '';
           final username     = data["username"] ?? '';
-          final userEmail    = data["email"]    ?? email; // fallback to typed email
+          final userEmail    = data["email"]    ?? email;
 
           if (accessToken.isNotEmpty) {
             await StorageService.saveToken(accessToken);
@@ -165,13 +165,15 @@ class AuthController extends GetxController {
           if (refreshToken.isNotEmpty) {
             await StorageService.saveRefreshToken(refreshToken);
           }
-          // Save username + email so ProfileScreen loads instantly
           await StorageService.saveUserInfo(
             username: username,
             email: userEmail,
             profilePicture: data["profile_picture"] ?? '',
           );
         }
+
+        // ✅ পুরনো ChatController delete করো — নতুন user এর জন্য fresh instance দরকার
+        _deleteChatController();
 
         _showSuccess("Login Successful");
         Get.offAll(() => MainChatScreen());
@@ -223,6 +225,8 @@ class AuthController extends GetxController {
       final result = await AuthService().verifyOtp(email: _otpEmail, otp: otp);
       if (result["status"] == 200) {
         _timer?.cancel();
+        // ✅ নতুন user verify হলেও ChatController reset করো
+        _deleteChatController();
         _showEmailVerifiedOverlay(context);
       } else {
         _showError(_extractMessage(result["data"]) ?? "Invalid OTP");
@@ -297,6 +301,15 @@ class AuthController extends GetxController {
   // ════════════════════════════════════════════════════
   //  Private Helpers
   // ════════════════════════════════════════════════════
+
+  /// ✅ ChatController কে GetX registry থেকে মুছে ফেলে
+  /// যাতে পরের user login করলে সম্পূর্ণ নতুন instance তৈরি হয়
+  void _deleteChatController() {
+    if (Get.isRegistered<ChatController>()) {
+      Get.delete<ChatController>(force: true);
+    }
+  }
+
   String? _extractMessage(dynamic data) {
     if (data == null) return null;
     if (data is String) return data.isNotEmpty ? data : null;

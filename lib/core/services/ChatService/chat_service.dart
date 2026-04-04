@@ -10,10 +10,13 @@ import '../app_log.dart';
 
 class ChatService {
   static const String _baseUrl = "https://mathapi.dsrt321.online";
+  static const Duration _timeout = Duration(seconds: 30); // ✅ NEW
+
   final ApiServices _api;
   ChatService() : _api = ApiServices(baseUrl: _baseUrl);
 
-  Future<Map<String, String>> _authHeader() async {
+  // ✅ async সরানো হয়েছে — কোনো await ছিল না
+  Map<String, String> _authHeader() {
     final token = StorageService.accessToken;
     return token != null && token.isNotEmpty
         ? {
@@ -23,23 +26,30 @@ class ChatService {
         : {"Content-Type": "application/json"};
   }
 
+  Map<String, String> _authHeaderOnly() {
+    final token = StorageService.accessToken;
+    return token != null && token.isNotEmpty
+        ? {"Authorization": "Bearer $token"}
+        : {};
+  }
+
   // ════════════════════════════════════════════════════
   //  Create Session  POST /api/chat/sessions/
   // ════════════════════════════════════════════════════
   Future<int> createSession() async {
     const endpoint = "/api/chat/sessions/";
-    final token = StorageService.accessToken;
 
     AppLog.request(endpoint, body: {}, method: 'POST');
 
-    final response = await http.post(
+    final response = await http
+        .post(
       Uri.parse("$_baseUrl$endpoint"),
-      headers: {
-        "Content-Type": "application/json",
-        if (token != null && token.isNotEmpty)
-          "Authorization": "Bearer $token",
-      },
+      headers: _authHeader(),
       body: jsonEncode({}),
+    )
+        .timeout(
+      _timeout,
+      onTimeout: () => throw Exception("createSession timeout"),
     );
 
     AppLog.response(endpoint, {"status": response.statusCode, "body": response.body});
@@ -55,18 +65,20 @@ class ChatService {
 
   // ════════════════════════════════════════════════════
   //  List all sessions  GET /api/chat/sessions/
-  //  Response: { "count": N, "results": [...] }
-  //  ⚠️ NOTE: list response এ "user" field নেই — model এ optional করা হয়েছে
   // ════════════════════════════════════════════════════
   Future<List<ChatSession>> fetchSessions() async {
     const endpoint = "/api/chat/sessions/";
-    final headers = await _authHeader();
 
     AppLog.request(endpoint, method: 'GET');
 
-    final response = await http.get(
+    final response = await http
+        .get(
       Uri.parse("$_baseUrl$endpoint"),
-      headers: headers,
+      headers: _authHeader(),
+    )
+        .timeout(
+      _timeout,
+      onTimeout: () => throw Exception("fetchSessions timeout"),
     );
 
     if (response.statusCode != 200) {
@@ -77,7 +89,6 @@ class ChatService {
     final Map<String, dynamic> decoded = jsonDecode(response.body);
     AppLog.response(endpoint, decoded);
 
-    // ✅ "results" key থেকে নেওয়া হচ্ছে
     final List<dynamic> raw = decoded["results"] as List<dynamic>? ?? [];
     return raw
         .map((e) => ChatSession.fromJson(e as Map<String, dynamic>))
@@ -86,24 +97,25 @@ class ChatService {
 
   // ════════════════════════════════════════════════════
   //  Single session messages  GET /api/chat/sessions/<id>/
-  //  ⚠️ শুধু আপনার নিজের session এর id দিতে হবে
-  //     অন্য user এর session হলে 404 "Session not found" আসবে
   // ════════════════════════════════════════════════════
   Future<List<ChatMessage>> fetchSessionMessages(int sessionId) async {
     final endpoint = "/api/chat/sessions/$sessionId/";
-    final headers = await _authHeader();
 
     AppLog.request(endpoint, method: 'GET');
 
-    final response = await http.get(
+    final response = await http
+        .get(
       Uri.parse("$_baseUrl$endpoint"),
-      headers: headers,
+      headers: _authHeader(),
+    )
+        .timeout(
+      _timeout,
+      onTimeout: () => throw Exception("fetchSessionMessages timeout"),
     );
 
     if (response.statusCode == 404) {
       AppLog.error(endpoint, response.body, statusCode: 404);
-      // ✅ 404 হলে empty list return — crash হবে না
-      return [];
+      return []; // ✅ 404 হলে empty list — crash হবে না
     }
 
     if (response.statusCode != 200) {
@@ -125,18 +137,18 @@ class ChatService {
   // ════════════════════════════════════════════════════
   Future<ChatSession> renameSession(int sessionId, String title) async {
     final endpoint = "/api/chat/sessions/$sessionId/";
-    final token = StorageService.accessToken;
 
     AppLog.request(endpoint, body: {"title": title}, method: 'PUT');
 
-    final response = await http.put(
+    final response = await http
+        .put(
       Uri.parse("$_baseUrl$endpoint"),
-      headers: {
-        "Content-Type": "application/json",
-        if (token != null && token.isNotEmpty)
-          "Authorization": "Bearer $token",
-      },
+      headers: _authHeader(),
       body: jsonEncode({"title": title}),
+    )
+        .timeout(
+      _timeout,
+      onTimeout: () => throw Exception("renameSession timeout"),
     );
 
     if (response.statusCode != 200) {
@@ -151,21 +163,20 @@ class ChatService {
 
   // ════════════════════════════════════════════════════
   //  Delete session  DELETE /api/chat/sessions/<id>/
-  //  Response: 204 No Content
   // ════════════════════════════════════════════════════
   Future<void> deleteSession(int sessionId) async {
     final endpoint = "/api/chat/sessions/$sessionId/";
-    final token = StorageService.accessToken;
 
     AppLog.request(endpoint, method: 'DELETE');
 
-    final response = await http.delete(
+    final response = await http
+        .delete(
       Uri.parse("$_baseUrl$endpoint"),
-      headers: {
-        "Content-Type": "application/json",
-        if (token != null && token.isNotEmpty)
-          "Authorization": "Bearer $token",
-      },
+      headers: _authHeader(),
+    )
+        .timeout(
+      _timeout,
+      onTimeout: () => throw Exception("deleteSession timeout"),
     );
 
     if (response.statusCode != 204 && response.statusCode != 200) {
@@ -178,7 +189,6 @@ class ChatService {
 
   // ════════════════════════════════════════════════════
   //  Send Message  POST /api/chat/sessions/<id>/send/
-  //  ⚠️ session id অবশ্যই আপনার নিজের হতে হবে
   // ════════════════════════════════════════════════════
   Future<ChatRound> sendMessage({
     required int sessionId,
@@ -187,7 +197,6 @@ class ChatService {
     File? audioFile,
   }) async {
     final endpoint = "/api/chat/sessions/$sessionId/send/";
-    final token = StorageService.accessToken;
 
     AppLog.request(endpoint, body: {
       "session_id": sessionId,
@@ -196,16 +205,12 @@ class ChatService {
       "has_audio": audioFile != null,
     });
 
-    final headers = <String, String>{
-      if (token != null && token.isNotEmpty)
-        "Authorization": "Bearer $token",
-    };
-
+    // ✅ message null বা empty হলেও "message" field পাঠানো হচ্ছে
     final data = await _api.postMultipart(
       endpoint: endpoint,
-      headers: headers,
+      headers: _authHeaderOnly(),
       fields: {
-        if (message != null && message.isNotEmpty) "message": message,
+        "message": message ?? "", // ✅ FIXED: আগে empty হলে skip হতো
       },
       file: imageFile,
       fileField: "image",

@@ -20,21 +20,16 @@ class StorageService {
   // ── Access Token ─────────────────────────────────
   static Future<void> saveToken(String accessToken) async =>
       await _box.write(_tokenKey, accessToken);
-  // await StorageService.saveToken(accessToken);
 
   static String? get accessToken => _box.read(_tokenKey);
   static bool get hasToken => accessToken != null && accessToken!.isNotEmpty;
 
   // ── Refresh Token ────────────────────────────────
-  // static Future<void> saveRefreshToken(String refreshToken) async =>
-  //     await _box.write(_refreshTokenKey, refreshToken);
   static Future<void> saveRefreshToken(String token) async {
     await _box.write('refresh_token', token);
   }
-  // await StorageService.saveRefreshToken(refreshToken);
-  static String? get refreshToken => _box.read<String>('refresh_token');
 
-  // static String? get refreshToken => _box.read(_refreshTokenKey);
+  static String? get refreshToken => _box.read<String>('refresh_token');
 
   // ── User Info ────────────────────────────────────
   static Future<void> saveUserInfo({
@@ -45,13 +40,11 @@ class StorageService {
     await _box.write(_usernameKey, username);
     await _box.write(_emailKey, email);
     await _box.write(_profilePictureKey, profilePicture ?? '');
-  //   await StorageService.saveUserInfo(username: ..., email: ...);
-
   }
 
-  static String get username      => _box.read(_usernameKey)       ?? '';
-  static String get email         => _box.read(_emailKey)          ?? '';
-  static String get profilePicture => _box.read(_profilePictureKey) ?? '';
+  static String get username       => _box.read(_usernameKey)        ?? '';
+  static String get email          => _box.read(_emailKey)           ?? '';
+  static String get profilePicture => _box.read(_profilePictureKey)  ?? '';
 
   static Future<void> saveUsername(String value) async =>
       await _box.write(_usernameKey, value);

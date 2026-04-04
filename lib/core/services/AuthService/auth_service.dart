@@ -267,11 +267,9 @@ class AuthService {
   }
 
   // ════════════════════════════════════════════════════
-  //  LOGOUT USER  ✅ UPDATED
+  //  LOGOUT USER
   //  POST /api/users/logout/
   //  Body: { "refresh": "<refresh_token>" }
-  //  ⚠️ শুধু local clear করলে 400 "Invalid token." আসে
-  //     তাই body তে refresh token পাঠাতে হবে
   // ════════════════════════════════════════════════════
   static Future<void> logout() async {
     const endpoint = "/api/users/logout/";
@@ -289,7 +287,6 @@ class AuthService {
           if (accessToken != null && accessToken.isNotEmpty)
             "Authorization": "Bearer $accessToken",
         },
-        // ✅ refresh token body তে দিতে হবে — না দিলে 400 আসে
         body: jsonEncode({
           "refresh": refreshToken ?? "",
         }),
@@ -305,17 +302,22 @@ class AuthService {
           response.statusCode == 205) {
         AppLog.info("Logout API success ✅");
       } else {
-        // 400 "Invalid token" — তবুও local clear করবো
         AppLog.error(endpoint, response.body,
             statusCode: response.statusCode);
       }
     } catch (e) {
-      // network error — তবুও local clear করবো
       AppLog.info("Logout network error (ignoring): $e");
     }
 
-    // ✅ API success বা fail — সবসময় local storage clear করো
+    // ✅ সবসময় local storage clear করো
     await StorageService.logout();
+
+    // ✅ ChatController instance delete করো যাতে পরের user এর data আলাদা থাকে
+    // Lazy import এড়াতে dynamic delete ব্যবহার করা হচ্ছে
+    try {
+      Get.delete(tag: 'ChatController', force: true);
+    } catch (_) {}
+
     Get.offAll(() => const SignInScreen());
   }
 

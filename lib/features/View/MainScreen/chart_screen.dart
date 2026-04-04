@@ -36,8 +36,9 @@ class MainChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors     = AppColors.instance;
-    final controller = Get.put(ChatController());
+    final colors = AppColors.instance;
+    // ✅ permanent: false — screen dispose হলে controller ও dispose হবে
+    final controller = Get.put(ChatController(), permanent: false);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -71,14 +72,17 @@ class MainChatScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 50.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Icon(Icons.menu, size: 28.sp),
+          ),
+          SizedBox(height: 12.h),
 
           // ── Header: menu icon + New Chat ──────────────
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Row(
               children: [
-                Icon(Icons.menu, size: 28.sp),
-                const Spacer(),
                 GestureDetector(
                   onTap: () async {
                     Get.back();
@@ -229,22 +233,25 @@ class MainChatScreen extends StatelessWidget {
                 onTap: isOut
                     ? null
                     : () async {
-                  // ✅ confirm dialog
+                  // ✅ Confirm dialog
                   final confirm = await showDialog<bool>(
                     context: Get.context!,
                     builder: (dialogContext) => AlertDialog(
                       title: const Text("Logout?"),
-                      content: const Text("Are you sure you want to log out of your account?"),
+                      content: const Text(
+                          "Are you sure you want to log out of your account?"),
                       actions: [
                         TextButton(
-                          onPressed: () => Navigator.pop(dialogContext, false),
+                          onPressed: () =>
+                              Navigator.pop(dialogContext, false),
                           child: const Text("Cancel"),
                         ),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xff2F3E5B),
                           ),
-                          onPressed: () => Navigator.pop(dialogContext, true),
+                          onPressed: () =>
+                              Navigator.pop(dialogContext, true),
                           child: const Text(
                             "Logout",
                             style: TextStyle(color: Colors.white),
@@ -254,12 +261,14 @@ class MainChatScreen extends StatelessWidget {
                     ),
                   );
 
-                  if (confirm == true) {
-                    Get.offAll(() => SignInScreen());
-                  }
+                  // ✅ শুধু একটাই if block — আগের double-navigation bug fix হয়েছে
                   if (confirm == true) {
                     Get.back(); // drawer বন্ধ করো
-                    await controller.logout(); // ✅ API call
+                    // ✅ ChatController delete করো — পরের user এর জন্য fresh state
+                    if (Get.isRegistered<ChatController>()) {
+                      Get.delete<ChatController>(force: true);
+                    }
+                    await controller.logout(); // API call + navigate to SignIn
                   }
                 },
                 child: Container(
@@ -380,8 +389,7 @@ class MainChatScreen extends StatelessWidget {
       onPressed: onTap,
       icon: Icon(icon, size: 18.sp, color: Colors.black87),
       label: Text(label,
-          style:
-          TextStyle(fontSize: 15.sp, color: Colors.black87)),
+          style: TextStyle(fontSize: 15.sp, color: Colors.black87)),
     );
   }
 
@@ -390,8 +398,7 @@ class MainChatScreen extends StatelessWidget {
   // ════════════════════════════════════════════════════
   Widget _buildTopBar(BuildContext context, AppColors colors) {
     return Padding(
-      padding:
-      EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -480,8 +487,8 @@ class MainChatScreen extends StatelessWidget {
       return ListView.builder(
         controller: controller.scrollController,
         physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.symmetric(
-            horizontal: 16.w, vertical: 12.h),
+        padding:
+        EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         itemCount: itemCount,
         itemBuilder: (context, index) {
           if (controller.isLoading.value &&
@@ -504,7 +511,8 @@ class MainChatScreen extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerRight,
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+          padding:
+          EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           decoration: BoxDecoration(
             color: colors.mainBtnColor,
             borderRadius: BorderRadius.only(
@@ -518,7 +526,6 @@ class MainChatScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisSize: MainAxisSize.min,
             children: [
-
               // 🖼️ IMAGE
               if (msg.image != null && msg.image!.isNotEmpty)
                 ClipRRect(
@@ -535,7 +542,8 @@ class MainChatScreen extends StatelessWidget {
                         width: 200.w,
                         height: 120.h,
                         child: const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
+                          child: CircularProgressIndicator(
+                              color: Colors.white),
                         ),
                       );
                     },
@@ -550,7 +558,7 @@ class MainChatScreen extends StatelessWidget {
               if (msg.image != null && msg.message.isNotEmpty)
                 SizedBox(height: 6.h),
 
-              // 🎤 AUDIO (IMPROVED)
+              // 🎤 AUDIO
               if (msg.audio != null && msg.audio!.isNotEmpty)
                 Obx(() {
                   final ctrl = Get.find<ChatController>();
@@ -561,7 +569,8 @@ class MainChatScreen extends StatelessWidget {
                       await ctrl.playAudio(msg.id, msg.audio!);
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 12.w, vertical: 8.h),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20.r),
@@ -570,18 +579,20 @@ class MainChatScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isPlaying ? Icons.pause_circle : Icons.play_circle,
+                            isPlaying
+                                ? Icons.pause_circle
+                                : Icons.play_circle,
                             color: Colors.white,
                             size: 28.sp,
                           ),
                           SizedBox(width: 8.w),
-
-                          // 🔊 Text + fake duration style
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isPlaying ? "Playing..." : "Voice Message",
+                                isPlaying
+                                    ? "Playing..."
+                                    : "Voice Message",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 13.sp,
@@ -589,7 +600,9 @@ class MainChatScreen extends StatelessWidget {
                               ),
                               SizedBox(height: 2.h),
                               Text(
-                                isPlaying ? "Tap to stop" : "Tap to play",
+                                isPlaying
+                                    ? "Tap to stop"
+                                    : "Tap to play",
                                 style: TextStyle(
                                   color: Colors.white70,
                                   fontSize: 11.sp,
@@ -635,8 +648,7 @@ class MainChatScreen extends StatelessWidget {
             height: 32.w,
             margin: EdgeInsets.only(right: 8.w, top: 2.h),
             decoration: BoxDecoration(
-                color: colors.mainBtnColor,
-                shape: BoxShape.circle),
+                color: colors.mainBtnColor, shape: BoxShape.circle),
             child: Icon(Icons.auto_awesome,
                 color: Colors.white, size: 16.sp),
           ),
@@ -648,9 +660,9 @@ class MainChatScreen extends StatelessWidget {
                 color: colors.softMintBackground,
                 border: Border.all(color: colors.border),
                 borderRadius: BorderRadius.only(
-                  topLeft:     Radius.circular(4.r),
-                  topRight:    Radius.circular(16.r),
-                  bottomLeft:  Radius.circular(16.r),
+                  topLeft: Radius.circular(4.r),
+                  topRight: Radius.circular(16.r),
+                  bottomLeft: Radius.circular(16.r),
                   bottomRight: Radius.circular(16.r),
                 ),
               ),
@@ -681,8 +693,7 @@ class MainChatScreen extends StatelessWidget {
             height: 32.w,
             margin: EdgeInsets.only(right: 8.w, top: 2.h),
             decoration: BoxDecoration(
-                color: colors.mainBtnColor,
-                shape: BoxShape.circle),
+                color: colors.mainBtnColor, shape: BoxShape.circle),
             child: Icon(Icons.auto_awesome,
                 color: Colors.white, size: 16.sp),
           ),
@@ -737,8 +748,7 @@ class MainChatScreen extends StatelessWidget {
                       ctrl.selectedImage = null;
                       ctrl.update();
                     },
-                    child:
-                    const Icon(Icons.close, color: Colors.red),
+                    child: const Icon(Icons.close, color: Colors.red),
                   ),
                 ],
               ),
@@ -749,8 +759,8 @@ class MainChatScreen extends StatelessWidget {
         // Input bar
         Container(
           color: colors.mainBtnColor,
-          padding: EdgeInsets.symmetric(
-              horizontal: 14.w, vertical: 10.h),
+          padding:
+          EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           child: Row(
             children: [
               Obx(() => GestureDetector(
@@ -781,13 +791,12 @@ class MainChatScreen extends StatelessWidget {
                     border: Border.all(
                         color: Colors.white.withOpacity(0.20)),
                   ),
-                  padding:
-                  EdgeInsets.symmetric(horizontal: 14.w),
+                  padding: EdgeInsets.symmetric(horizontal: 14.w),
                   alignment: Alignment.center,
                   child: TextField(
                     controller: controller.inputController,
-                    style: TextStyle(
-                        color: Colors.white, fontSize: 14.sp),
+                    style:
+                    TextStyle(color: Colors.white, fontSize: 14.sp),
                     onSubmitted: (_) => controller.sendMessage(),
                     decoration: InputDecoration(
                       border: InputBorder.none,
@@ -819,8 +828,7 @@ class MainChatScreen extends StatelessWidget {
                     : Transform.rotate(
                   angle: -0.3,
                   child: Icon(Icons.send_rounded,
-                      color: Colors.white,
-                      size: 24.sp),
+                      color: Colors.white, size: 24.sp),
                 ),
               )),
             ],
@@ -848,7 +856,7 @@ class MainChatScreen extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════
-//  SESSION TILE  (swipe to delete + long-press to rename)
+//  SESSION TILE
 // ══════════════════════════════════════════════════════════
 class _SessionTile extends StatelessWidget {
   final ChatSession session;
@@ -883,7 +891,7 @@ class _SessionTile extends StatelessWidget {
       ),
       confirmDismiss: (_) async {
         onDelete();
-        return false; // controller handles removal
+        return false;
       },
       child: GestureDetector(
         onLongPress: onRename,
@@ -897,8 +905,8 @@ class _SessionTile extends StatelessWidget {
           ),
           child: ListTile(
             dense: true,
-            contentPadding: EdgeInsets.symmetric(
-                horizontal: 12.w, vertical: 2.h),
+            contentPadding:
+            EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
             leading: Container(
               width: 34.w,
               height: 34.w,
@@ -911,9 +919,7 @@ class _SessionTile extends StatelessWidget {
               child: Icon(
                 Icons.chat_bubble_outline_rounded,
                 size: 15.sp,
-                color: isActive
-                    ? Colors.white
-                    : const Color(0xff2F3E5B),
+                color: isActive ? Colors.white : const Color(0xff2F3E5B),
               ),
             ),
             title: Text(
@@ -922,18 +928,15 @@ class _SessionTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 13.sp,
-                fontWeight: isActive
-                    ? FontWeight.w600
-                    : FontWeight.w400,
-                color: isActive
-                    ? const Color(0xff2F3E5B)
-                    : Colors.black87,
+                fontWeight:
+                isActive ? FontWeight.w600 : FontWeight.w400,
+                color: isActive ? const Color(0xff2F3E5B) : Colors.black87,
               ),
             ),
             subtitle: Text(
               _formatDate(session.createdAt),
-              style: TextStyle(
-                  fontSize: 11.sp, color: Colors.black38),
+              style:
+              TextStyle(fontSize: 11.sp, color: Colors.black38),
             ),
             trailing: PopupMenuButton<String>(
               icon: Icon(Icons.more_vert,
@@ -1019,10 +1022,9 @@ class _AnimatedSparkleState extends State<_AnimatedSparkle>
     _anim = Tween<double>(begin: 0.25, end: 1.0).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
     );
-    Future.delayed(Duration(milliseconds: widget.data.delay),
-            () {
-          if (mounted) _ctrl.repeat(reverse: true);
-        });
+    Future.delayed(Duration(milliseconds: widget.data.delay), () {
+      if (mounted) _ctrl.repeat(reverse: true);
+    });
   }
 
   @override
@@ -1089,8 +1091,7 @@ class _TypingDotsState extends State<_TypingDots>
             final opacity =
             (math.sin(phase * math.pi)).clamp(0.3, 1.0);
             return Padding(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 2),
               child: Opacity(
                 opacity: opacity,
                 child: Container(
@@ -1138,11 +1139,10 @@ class _SparklePainter extends CustomPainter {
     final inner = outer * 0.22;
     final path  = Path();
     for (int i = 0; i < 8; i++) {
-      final angle =
-          (i * 45.0 - 90.0) * math.pi / 180.0;
-      final r = i.isEven ? outer : inner;
-      final x = cx + r * math.cos(angle);
-      final y = cy + r * math.sin(angle);
+      final angle = (i * 45.0 - 90.0) * math.pi / 180.0;
+      final r     = i.isEven ? outer : inner;
+      final x     = cx + r * math.cos(angle);
+      final y     = cy + r * math.sin(angle);
       i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
     }
     path.close();
@@ -1150,8 +1150,7 @@ class _SparklePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_SparklePainter old) =>
-      old.color != color;
+  bool shouldRepaint(_SparklePainter old) => old.color != color;
 }
 
 // ══════════════════════════════════════════════════════════
