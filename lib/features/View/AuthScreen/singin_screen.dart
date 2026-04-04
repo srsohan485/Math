@@ -29,7 +29,7 @@ class SignInScreen extends StatelessWidget {
               ),
               SizedBox(height: 28.h),
               Text(
-                AppStrings.signin,
+                AppStrings.signin.tr,
                 style: TextStyle(
                   fontSize: 26.sp,
                   fontWeight: FontWeight.w700,
@@ -39,13 +39,13 @@ class SignInScreen extends StatelessWidget {
               SizedBox(height: 20.h),
               _buildTextField(
                 controller: controller.emailController,
-                hint: AppStrings.email,
+                hint: AppStrings.email.tr,
                 colors: colors,
               ),
               SizedBox(height: 12.h),
               Obx(() => _buildTextField(
                 controller: controller.passwordController,
-                hint: AppStrings.password,
+                hint: AppStrings.password.tr,
                 colors: colors,
                 obscure: controller.isPasswordVisible.value,
                 suffixIcon: IconButton(
@@ -65,7 +65,7 @@ class SignInScreen extends StatelessWidget {
                 child: GestureDetector(
                   onTap: controller.goToForgotPassword,
                   child: Text(
-                    AppStrings.forgotpassword,
+                    AppStrings.forgotpassword.tr,
                     style: TextStyle(
                       fontSize: 13.sp,
                       color: colors.hintTextColor,
@@ -75,7 +75,7 @@ class SignInScreen extends StatelessWidget {
               ),
               SizedBox(height: 32.h),
               Obx(() => _buildPrimaryButton(
-                label: AppStrings.singin,
+                label: AppStrings.singin.tr,
                 colors: colors,
                 isLoading: controller.isLoading.value,
                 onTap: controller.isLoading.value ? null : controller.login,
@@ -86,8 +86,8 @@ class SignInScreen extends StatelessWidget {
               _buildSocialRow(colors),
               SizedBox(height: 24.h),
               _buildBottomText(
-                prefix: AppStrings.dontaccounttext,
-                action: AppStrings.signup,
+                prefix: AppStrings.dontaccounttext.tr,
+                action: AppStrings.signup.tr,
                 colors: colors,
                 onTap: controller.goToSignUp,
               ),
@@ -174,7 +174,7 @@ class SignInScreen extends StatelessWidget {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 12.w),
           child: Text(
-            'or',
+            'or'.tr,
             style: TextStyle(fontSize: 13.sp, color: colors.hintTextColor),
           ),
         ),

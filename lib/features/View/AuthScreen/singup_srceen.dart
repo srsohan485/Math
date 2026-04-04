@@ -44,7 +44,7 @@ class SignUpScreen extends StatelessWidget {
               ),
               SizedBox(height: 28.h),
               Text(
-                AppStrings.signup,
+                AppStrings.signup.tr,
                 style: TextStyle(
                   fontSize: 26.sp,
                   fontWeight: FontWeight.w700,
@@ -54,20 +54,20 @@ class SignUpScreen extends StatelessWidget {
               SizedBox(height: 20.h),
               _buildTextField(
                 controller: controller.usernameController,
-                hint: AppStrings.username,
+                hint: AppStrings.username.tr,
                 colors: colors,
               ),
               SizedBox(height: 12.h),
               _buildTextField(
                 controller: controller.emailController,
-                hint: AppStrings.email,
+                hint: AppStrings.email.tr,
                 colors: colors,
                 keyboardType: TextInputType.emailAddress,
               ),
               SizedBox(height: 12.h),
               Obx(() => _buildTextField(
                 controller: controller.passwordController,
-                hint: AppStrings.password,
+                hint: AppStrings.password.tr,
                 colors: colors,
                 obscure: controller.isPasswordVisible.value,
                 suffixIcon: IconButton(
@@ -84,7 +84,7 @@ class SignUpScreen extends StatelessWidget {
               SizedBox(height: 12.h),
               Obx(() => _buildTextField(
                 controller: controller.confirmPasswordController,
-                hint: AppStrings.retypepassword,
+                hint: AppStrings.retypepassword.tr,
                 colors: colors,
                 obscure: controller.isConfirmPasswordVisible.value,
                 suffixIcon: IconButton(
@@ -103,7 +103,7 @@ class SignUpScreen extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8.w),
                   child: Text(
-                    AppStrings.byclickingtext,
+                    AppStrings.byclickingtext.tr,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11.sp,
@@ -115,7 +115,7 @@ class SignUpScreen extends StatelessWidget {
               ),
               SizedBox(height: 20.h),
               Obx(() => _buildPrimaryButton(
-                label: AppStrings.signup,
+                label: AppStrings.signup.tr,
                 colors: colors,
                 isLoading: controller.isLoading.value,
                 onTap: controller.isLoading.value ? null : controller.signUp,
@@ -126,8 +126,8 @@ class SignUpScreen extends StatelessWidget {
               _buildSocialRow(colors),
               SizedBox(height: 24.h),
               _buildBottomText(
-                prefix: AppStrings.haveaccounttext,
-                action: AppStrings.singin,
+                prefix: AppStrings.haveaccounttext.tr,
+                action: AppStrings.singin.tr,
                 colors: colors,
                 onTap: controller.goToSignIn,
               ),
@@ -216,7 +216,7 @@ class SignUpScreen extends StatelessWidget {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 12.w),
           child: Text(
-            'or',
+            'or'.tr,
             style: TextStyle(fontSize: 13.sp, color: colors.hintTextColor),
           ),
         ),

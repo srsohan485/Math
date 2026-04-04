@@ -29,7 +29,7 @@ class ForgotPasswordScreen extends StatelessWidget {
               ),
               SizedBox(height: 36.h),
               Text(
-                'Forgot Password',
+                'Forgot Password'.tr,
                 style: TextStyle(
                   fontSize: 26.sp,
                   fontWeight: FontWeight.w700,
@@ -42,7 +42,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                 keyboardType: TextInputType.emailAddress,
                 style: TextStyle(fontSize: 14.sp, color: colors.titleTextColor),
                 decoration: InputDecoration(
-                  hintText: AppStrings.email,
+                  hintText: AppStrings.email.tr,
                   hintStyle:
                   TextStyle(fontSize: 14.sp, color: colors.hintTextColor),
                   filled: true,
@@ -84,7 +84,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                     ),
                   )
                       : Text(
-                    AppStrings.Sendotp,
+                    AppStrings.Sendotp.tr,
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,

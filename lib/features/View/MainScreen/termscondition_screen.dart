@@ -17,7 +17,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Controller inject — যদি আগে থেকে put না করা থাকে তাহলে এখানেই করবে
     final controller = Get.put(TermsPrivacyController());
     final c = AppColors.instance;
 
@@ -37,7 +36,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
         title: Obx(
               () => Text(
             controller.isLoading.value || controller.title.value.isEmpty
-                ? AppStrings.policytext
+                ? AppStrings.policytext.tr
                 : controller.title.value,
             style: TextStyle(
               fontSize: 17.sp,
@@ -94,7 +93,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: Text(
-                        'Try Again',
+                        'Try Again'.tr,
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w600,
@@ -115,7 +114,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title
               if (controller.title.value.isNotEmpty) ...[
                 Text(
                   controller.title.value,
@@ -129,7 +127,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 SizedBox(height: 14.h),
               ],
 
-              // Content — paragraph গুলো \n\n দিয়ে আলাদা করে render
               ..._buildContentWidgets(controller.content.value, c),
 
               SizedBox(height: 40.h),
@@ -140,9 +137,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
     );
   }
 
-  // ── Content Parser ───────────────────────────────
-  // API content যদি plain text হয়, paragraph ভাগ করে দেখায়।
-  // যদি API ভবিষ্যতে structured JSON পাঠায় তখন এটা update করতে হবে।
   List<Widget> _buildContentWidgets(String content, AppColors c) {
     if (content.isEmpty) return [];
 
@@ -152,7 +146,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
       final trimmed = para.trim();
       if (trimmed.isEmpty) return const SizedBox.shrink();
 
-      // Numbered heading detect: "1. Title", "2. Something"
       final headingRegex = RegExp(r'^\d+\.\s+.+$');
       final isHeading = headingRegex.hasMatch(trimmed) && trimmed.length < 80;
 

@@ -15,6 +15,10 @@ class AppTranslations extends Translations {
       'delete'                     : 'Delete',
       'rename'                     : 'Rename',
       'today'                      : 'Today',
+      'or'                         : 'or',
+      'Confirm'                    : 'Confirm',
+      'Try Again'                  : 'Try Again',
+      'Forgot Password'            : 'Forgot Password',
 
       // ── Splash ───────────────────────────────────────────
       'Ask. Snap. Learn.'          : 'Ask. Snap. Learn.',
@@ -38,6 +42,11 @@ class AppTranslations extends Translations {
       'Enter 6 digit OTP'          : 'Enter 6 digit OTP',
       'otp_info'                   : 'We sent a verification code to your email. Please check. If not, resend in 0:22 minutes. Resend',
       'Reset Your Password'        : 'Reset Your Password',
+      'signup_otp_subtitle'        : 'We sent a code to verify your email address.',
+      'forgot_otp_subtitle'        : 'We sent a code to reset your password.',
+      'resend_info_prefix'         : 'We sent a verification code to your email. Please check. If not, resend in ',
+      'resend_info_suffix'         : ' minutes. ',
+      'Resend'                     : 'Resend',
 
       // ── Drawer / Navigation ──────────────────────────────
       'New chat'                   : 'New chat',
@@ -83,8 +92,8 @@ class AppTranslations extends Translations {
       'Privacy Policy of Pickfair' : 'Privacy Policy of Pickfair Such as social media platforms, advertising partners, or payment processors, with',
       'Edit'                       : 'Edit',
       'Delete account'             : 'Delete account',
-      'edit_username_hint'          : 'Enter new username',
-      'delete_account_confirm'      : 'Are you sure you want to delete your account? This action cannot be undone.',
+      'edit_username_hint'         : 'Enter new username',
+      'delete_account_confirm'     : 'Are you sure you want to delete your account? This action cannot be undone.',
     },
 
     'bg': {
@@ -99,6 +108,10 @@ class AppTranslations extends Translations {
       'delete'                     : 'Изтрий',
       'rename'                     : 'Преименувай',
       'today'                      : 'Днес',
+      'or'                         : 'или',
+      'Confirm'                    : 'Потвърди',
+      'Try Again'                  : 'Опитайте отново',
+      'Forgot Password'            : 'Забравена парола',
 
       // ── Splash ───────────────────────────────────────────
       'Ask. Snap. Learn.'          : 'Питай. Снимай. Учи.',
@@ -122,6 +135,11 @@ class AppTranslations extends Translations {
       'Enter 6 digit OTP'          : 'Въведете 6-цифрен OTP',
       'otp_info'                   : 'Изпратихме код за потвърждение на вашия имейл. Моля, проверете. Ако не, изпратете отново след 0:22 минути. Изпрати отново',
       'Reset Your Password'        : 'Нулирайте паролата си',
+      'signup_otp_subtitle'        : 'Изпратихме код за потвърждение на вашия имейл адрес.',
+      'forgot_otp_subtitle'        : 'Изпратихме код за нулиране на паролата ви.',
+      'resend_info_prefix'         : 'Изпратихме код за потвърждение на вашия имейл. Моля, проверете. Ако не, изпратете отново след ',
+      'resend_info_suffix'         : ' минути. ',
+      'Resend'                     : 'Изпрати отново',
 
       // ── Drawer / Navigation ──────────────────────────────
       'New chat'                   : 'Нов чат',
@@ -167,8 +185,8 @@ class AppTranslations extends Translations {
       'Privacy Policy of Pickfair' : 'Политика за поверителност на Pickfair, като платформи за социални медии, рекламни партньори или платежни процесори, с',
       'Edit'                       : 'Редактирай',
       'Delete account'             : 'Изтрий акаунт',
-      'edit_username_hint'          : 'Въведете ново потребителско име',
-      'delete_account_confirm'      : 'Сигурни ли сте, че искате да изтриете акаунта си? Това действие не може да бъде отменено.',
+      'edit_username_hint'         : 'Въведете ново потребителско име',
+      'delete_account_confirm'     : 'Сигурни ли сте, че искате да изтриете акаунта си? Това действие не може да бъде отменено.',
     },
   };
 }

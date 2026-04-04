@@ -36,7 +36,7 @@ class EnterOtpScreen extends StatelessWidget {
               ),
               SizedBox(height: 36.h),
               Text(
-                AppStrings.otptext,
+                AppStrings.otptext.tr,
                 style: TextStyle(
                   fontSize: 26.sp,
                   fontWeight: FontWeight.w700,
@@ -46,8 +46,8 @@ class EnterOtpScreen extends StatelessWidget {
               SizedBox(height: 8.h),
               Text(
                 isSignUpFlow
-                    ? "We sent a code to verify your email address."
-                    : "We sent a code to reset your password.",
+                    ? 'signup_otp_subtitle'.tr
+                    : 'forgot_otp_subtitle'.tr,
                 style: TextStyle(fontSize: 13.sp, color: colors.hintTextColor),
               ),
               SizedBox(height: 20.h),
@@ -61,7 +61,7 @@ class EnterOtpScreen extends StatelessWidget {
                   letterSpacing: 6,
                 ),
                 decoration: InputDecoration(
-                  hintText: AppStrings.enterotptext,
+                  hintText: AppStrings.enterotptext.tr,
                   hintStyle: TextStyle(
                     fontSize: 14.sp,
                     color: colors.hintTextColor,
@@ -111,7 +111,7 @@ class EnterOtpScreen extends StatelessWidget {
                     ),
                   )
                       : Text(
-                    AppStrings.Submit,
+                    AppStrings.Submit.tr,
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
@@ -139,21 +139,20 @@ class EnterOtpScreen extends StatelessWidget {
           style: TextStyle(
               fontSize: 12.sp, color: colors.hintTextColor, height: 1.5),
           children: [
-            const TextSpan(
-              text:
-              'We sent a verification code to your email. Please check. If not, resend in ',
+            TextSpan(
+              text: 'resend_info_prefix'.tr,
             ),
             TextSpan(
               text: '0:${secs.toString().padLeft(2, '0')}',
               style: TextStyle(
                   fontWeight: FontWeight.w600, color: colors.titleTextColor),
             ),
-            const TextSpan(text: ' minutes. '),
+            TextSpan(text: 'resend_info_suffix'.tr),
             WidgetSpan(
               child: GestureDetector(
                 onTap: canSend ? controller.resendOtp : null,
                 child: Text(
-                  'Resend',
+                  'Resend'.tr,
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,

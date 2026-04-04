@@ -29,7 +29,7 @@ class ResetPasswordScreen extends StatelessWidget {
               ),
               SizedBox(height: 36.h),
               Text(
-                AppStrings.resetpassword,
+                AppStrings.resetpassword.tr,
                 style: TextStyle(
                   fontSize: 26.sp,
                   fontWeight: FontWeight.w700,
@@ -39,7 +39,7 @@ class ResetPasswordScreen extends StatelessWidget {
               SizedBox(height: 20.h),
               Obx(() => _buildTextField(
                 controller: controller.passwordController,
-                hint: AppStrings.password,
+                hint: AppStrings.password.tr,
                 colors: colors,
                 obscure: controller.isPasswordVisible.value,
                 onToggle: controller.togglePasswordVisibility,
@@ -47,7 +47,7 @@ class ResetPasswordScreen extends StatelessWidget {
               SizedBox(height: 12.h),
               Obx(() => _buildTextField(
                 controller: controller.retypePasswordController,
-                hint: AppStrings.retypepassword,
+                hint: AppStrings.retypepassword.tr,
                 colors: colors,
                 obscure: controller.isRetypePasswordVisible.value,
                 onToggle: controller.toggleRetypePasswordVisibility,
@@ -77,7 +77,7 @@ class ResetPasswordScreen extends StatelessWidget {
                     ),
                   )
                       : Text(
-                    'Confirm',
+                    'Confirm'.tr,
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,

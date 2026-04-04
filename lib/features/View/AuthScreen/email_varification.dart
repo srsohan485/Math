@@ -38,7 +38,7 @@ class EmailVerifiedScreen extends StatelessWidget {
               ),
               SizedBox(height: 20.h),
               Text(
-                AppStrings.emailverified,
+                AppStrings.emailverified.tr,
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w700,
@@ -60,7 +60,7 @@ class EmailVerifiedScreen extends StatelessWidget {
                         color: colors.loginBtnColor, size: 16.sp),
                     SizedBox(width: 6.w),
                     Text(
-                      AppStrings.verifiedemail,
+                      AppStrings.verifiedemail.tr,
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: colors.loginBtnColor,
@@ -72,7 +72,7 @@ class EmailVerifiedScreen extends StatelessWidget {
               ),
               SizedBox(height: 12.h),
               Text(
-                AppStrings.confirmemailtext,
+                AppStrings.confirmemailtext.tr,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13.sp,
@@ -94,7 +94,7 @@ class EmailVerifiedScreen extends StatelessWidget {
                     elevation: 0,
                   ),
                   child: Text(
-                    AppStrings.Continue,
+                    AppStrings.Continue.tr,
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
