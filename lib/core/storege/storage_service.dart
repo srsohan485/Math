@@ -9,6 +9,7 @@ class StorageService {
   static const _usernameKey            = 'username';
   static const _emailKey               = 'email';
   static const _profilePictureKey      = 'profile_picture';
+  static const _languageKey            = 'language_code'; // ← NEW
 
   // ── Onboarding ───────────────────────────────────
   static Future<void> saveOnboardingCompleted() async =>
@@ -30,6 +31,12 @@ class StorageService {
   }
 
   static String? get refreshToken => _box.read<String>('refresh_token');
+
+  // ── Language ─────────────────────────────────────  ← NEW SECTION
+  static Future<void> saveLanguage(String languageCode) async =>
+      await _box.write(_languageKey, languageCode);
+
+  static String get language => _box.read(_languageKey) ?? 'en';
 
   // ── User Info ────────────────────────────────────
   static Future<void> saveUserInfo({

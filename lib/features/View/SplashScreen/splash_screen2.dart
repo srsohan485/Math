@@ -4,7 +4,7 @@ import 'package:mathsolving/core/AppText/app_text.dart';
 import '../../../core/AppColor/app_color.dart';
 import '../../../core/AppImages/app_images.dart';
 import '../AuthScreen/singin_screen.dart';
-import '../Languagepage/language_screen.dart';
+import '../LanguageScreen/language_screen.dart';
 
 
 

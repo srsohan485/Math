@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:mathsolving/core/AppColor/app_color.dart';
 import 'package:mathsolving/core/AppImages/app_images.dart';
-import 'package:mathsolving/core/AppText/app_text.dart';
 
+import '../../Controller/LanguageController/language_controller.dart';
 import '../AuthScreen/singin_screen.dart';
 
 class SelectLanguageScreen extends StatefulWidget {
@@ -14,19 +15,22 @@ class SelectLanguageScreen extends StatefulWidget {
 }
 
 class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
-  String _selectedLanguage = 'English';
+  // Lazily find or create the controller
+  final LanguageController _langController = Get.put(LanguageController());
+
   bool _isDropdownOpen = false;
 
-  final List<String> _languages = [
-    'English',
-    'Arabic',
-    'French',
-    'German',
-    'Spanish',
-    'Turkish',
-    'Urdu',
-    'Bengali',
-  ];
+  // Display names shown in the UI
+  final List<String> _languages = ['English', 'Bulgarian'];
+
+  // Local selection — starts from whatever is persisted
+  late String _selectedLanguage;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedLanguage = _langController.currentDisplayName;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,20 +44,20 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
             children: [
               SizedBox(height: 40.h),
 
-              /// Eye of Horus Logo
+              /// Logo
               Center(
                 child: SizedBox(
                   width: 80.w,
                   height: 60.h,
-                  child: Image.asset(AppImages.Toplogo)
+                  child: Image.asset(AppImages.Toplogo),
                 ),
               ),
 
               SizedBox(height: 24.h),
 
-              /// Title
+              /// Title — uses GetX translation
               Text(
-                AppStrings.language,
+                'Select language'.tr,
                 style: TextStyle(
                   fontSize: 26.sp,
                   fontWeight: FontWeight.w700,
@@ -66,14 +70,10 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
 
               /// Dropdown
               GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isDropdownOpen = !_isDropdownOpen;
-                  });
-                },
+                onTap: () => setState(() => _isDropdownOpen = !_isDropdownOpen),
                 child: Column(
                   children: [
-                    /// Dropdown Button
+                    // ── Dropdown Button ──────────────────────────────
                     Container(
                       width: double.infinity,
                       padding: EdgeInsets.symmetric(
@@ -124,7 +124,7 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
                       ),
                     ),
 
-                    /// Dropdown List
+                    // ── Dropdown List ────────────────────────────────
                     if (_isDropdownOpen)
                       Container(
                         width: double.infinity,
@@ -134,13 +134,10 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
                             bottomLeft: Radius.circular(12.r),
                             bottomRight: Radius.circular(12.r),
                           ),
-                          border: Border(
-                            left: BorderSide(
-                                color: const Color(0xFFE0E0E0), width: 1.5),
-                            right: BorderSide(
-                                color: const Color(0xFFE0E0E0), width: 1.5),
-                            bottom: BorderSide(
-                                color: const Color(0xFFE0E0E0), width: 1.5),
+                          border: const Border(
+                            left:   BorderSide(color: Color(0xFFE0E0E0), width: 1.5),
+                            right:  BorderSide(color: Color(0xFFE0E0E0), width: 1.5),
+                            bottom: BorderSide(color: Color(0xFFE0E0E0), width: 1.5),
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -154,12 +151,10 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
                           children: _languages.map((lang) {
                             final isSelected = lang == _selectedLanguage;
                             return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedLanguage = lang;
-                                  _isDropdownOpen = false;
-                                });
-                              },
+                              onTap: () => setState(() {
+                                _selectedLanguage = lang;
+                                _isDropdownOpen   = false;
+                              }),
                               child: Container(
                                 width: double.infinity,
                                 padding: EdgeInsets.symmetric(
@@ -197,15 +192,12 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
                 width: double.infinity,
                 height: 54.h,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=>SignInScreen()));
-                    // Handle confirm action
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("${AppStrings.language}: $_selectedLanguage"),
-                        backgroundColor: const Color(0xFF1A2A4A),
-                      ),
-                    );
+                  onPressed: () async {
+                    // 1. Persist & apply the locale via controller
+                    await _langController.changeLanguageByName(_selectedLanguage);
+
+                    // 2. Navigate
+                    Get.off(() => const SignInScreen());
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A2A4A),
@@ -216,12 +208,12 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
                     ),
                   ),
                   child: Text(
-                    AppStrings.Continue,
+                    'Continue'.tr,    // ← localized
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
-                      color: AppColors.instance.baseColor
+                      color: AppColors.instance.baseColor,
                     ),
                   ),
                 ),
@@ -235,4 +227,3 @@ class _SelectLanguageScreenState extends State<SelectLanguageScreen> {
     );
   }
 }
-

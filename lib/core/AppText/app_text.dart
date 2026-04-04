@@ -48,6 +48,7 @@ class AppStrings {
   static const String deletetext = "Delete account";
   static const String name1 = "Nusrat";
   static const String nochats = "No chats yet";
+  static const String write = "write here...";
 
 
 

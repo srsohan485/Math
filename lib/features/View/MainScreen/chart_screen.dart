@@ -1,11 +1,3 @@
-// lib/features/View/ChatScreen/main_chat_screen.dart
-//
-// ✅ FIXED (audio-related changes only — all other logic is unchanged):
-//   1. Bottom bar now shows an audio preview strip when selectedAudio != null
-//   2. The mic button shows a red animated pulse while recording
-//   3. _buildUserBubble correctly resolves local-file audio paths for playback
-//   4. playAudio() in ChatController (separate file) does the actual playing
-
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -68,7 +60,7 @@ class MainChatScreen extends StatelessWidget {
   }
 
   // ════════════════════════════════════════════════════
-  //  DRAWER  (unchanged)
+  //  DRAWER
   // ════════════════════════════════════════════════════
   Widget _buildDrawer(AppColors colors, ChatController controller) {
     return Drawer(
@@ -102,7 +94,7 @@ class MainChatScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.edit, color: Colors.white, size: 15.sp),
                         SizedBox(width: 6.w),
-                        Text(AppStrings.newtext,
+                        Text('New chat'.tr,
                             style: TextStyle(color: Colors.white, fontSize: 13.sp)),
                       ],
                     ),
@@ -121,12 +113,12 @@ class MainChatScreen extends StatelessWidget {
               children: [
                 _drawerNavBtn(
                   icon: Icons.person_outline,
-                  label: AppStrings.profile,
+                  label: 'Profile'.tr,
                   onTap: () => Get.to(() => ProfileScreen()),
                 ),
                 _drawerNavBtn(
                   icon: Icons.description_outlined,
-                  label: AppStrings.termsconditiontext,
+                  label: 'Terms and privacy policy'.tr,
                   onTap: () => Get.to(() => TermsAndPrivacyScreen()),
                 ),
               ],
@@ -141,7 +133,7 @@ class MainChatScreen extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  AppStrings.history,
+                  'History'.tr,
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -178,7 +170,7 @@ class MainChatScreen extends StatelessWidget {
                     children: [
                       Icon(Icons.chat_bubble_outline, size: 34.sp, color: Colors.black26),
                       SizedBox(height: 8.h),
-                      Text(AppStrings.nochats,
+                      Text('No chats yet'.tr,
                           style: TextStyle(fontSize: 13.sp, color: Colors.black38)),
                     ],
                   ),
@@ -221,20 +213,19 @@ class MainChatScreen extends StatelessWidget {
                   final confirm = await showDialog<bool>(
                     context: Get.context!,
                     builder: (dialogContext) => AlertDialog(
-                      title: const Text("Logout?"),
-                      content: const Text(
-                          "Are you sure you want to log out of your account?"),
+                      title: Text('logout_title'.tr),
+                      content: Text('logout_confirm'.tr),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(dialogContext, false),
-                          child: const Text("Cancel"),
+                          child: Text('cancel'.tr),
                         ),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xff2F3E5B)),
                           onPressed: () => Navigator.pop(dialogContext, true),
-                          child: const Text("Logout",
-                              style: TextStyle(color: Colors.white)),
+                          child: Text('Log out'.tr,
+                              style: const TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
@@ -270,7 +261,7 @@ class MainChatScreen extends StatelessWidget {
                     children: [
                       Icon(Icons.logout, color: Colors.white, size: 16.sp),
                       SizedBox(width: 8.w),
-                      Text(AppStrings.Logout,
+                      Text('Log out'.tr,
                           style: TextStyle(color: Colors.white, fontSize: 14.sp)),
                     ],
                   ),
@@ -290,18 +281,19 @@ class MainChatScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Rename Chat"),
+        title: Text('rename_chat'.tr),
         content: TextField(
           controller: tc,
           autofocus: true,
-          decoration: const InputDecoration(
-            hintText: "Chat এর নাম লিখুন...",
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: 'rename_hint'.tr,
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+              onPressed: () => Navigator.pop(context),
+              child: Text('cancel'.tr)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xff2F3E5B)),
             onPressed: () async {
@@ -310,7 +302,7 @@ class MainChatScreen extends StatelessWidget {
               Navigator.pop(context);
               await controller.renameSession(session.id, name);
             },
-            child: const Text("Save", style: TextStyle(color: Colors.white)),
+            child: Text('save'.tr, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -322,18 +314,19 @@ class MainChatScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Delete Chat?"),
-        content: const Text("এই chat টি permanently delete হয়ে যাবে।"),
+        title: Text('delete_chat_title'.tr),
+        content: Text('delete_chat_confirm'.tr),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+              onPressed: () => Navigator.pop(context),
+              child: Text('cancel'.tr)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade600),
             onPressed: () async {
               Navigator.pop(context);
               await controller.deleteSession(sessionId);
             },
-            child: const Text("Delete", style: TextStyle(color: Colors.white)),
+            child: Text('delete'.tr, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -350,7 +343,7 @@ class MainChatScreen extends StatelessWidget {
   }
 
   // ════════════════════════════════════════════════════
-  //  TOP BAR  (unchanged)
+  //  TOP BAR
   // ════════════════════════════════════════════════════
   Widget _buildTopBar(BuildContext context, AppColors colors) {
     return Padding(
@@ -374,7 +367,7 @@ class MainChatScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(22.r),
               ),
               child: Text(
-                AppStrings.signup,
+                'Sign Up'.tr,
                 style: TextStyle(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
@@ -389,7 +382,7 @@ class MainChatScreen extends StatelessWidget {
   }
 
   // ════════════════════════════════════════════════════
-  //  EMPTY BODY  (unchanged)
+  //  EMPTY BODY
   // ════════════════════════════════════════════════════
   Widget _buildEmptyBody(AppColors colors) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -407,7 +400,7 @@ class MainChatScreen extends StatelessWidget {
             left: 24.w,
             right: 60.w,
             child: Text(
-              AppStrings.maintext,
+              'What can I help with ?'.tr,
               style: TextStyle(
                 fontSize: 24.sp,
                 fontWeight: FontWeight.w800,
@@ -422,7 +415,7 @@ class MainChatScreen extends StatelessWidget {
   }
 
   // ════════════════════════════════════════════════════
-  //  MESSAGE LIST  (unchanged)
+  //  MESSAGE LIST
   // ════════════════════════════════════════════════════
   Widget _buildMessageList(AppColors colors, ChatController controller) {
     return Obx(() {
@@ -504,11 +497,7 @@ class MainChatScreen extends StatelessWidget {
 
               if (msg.image != null && msg.message.isNotEmpty) SizedBox(height: 6.h),
 
-              // ✅ FIXED — 🎤 AUDIO
-              // audioUrl may be:
-              //   • absolute http(s) URL  → play directly
-              //   • relative API path     → prepend base URL in playAudio()
-              //   • local file path       → DeviceFileSource in playAudio()
+              // 🎤 AUDIO
               if (msg.audio != null && msg.audio!.isNotEmpty)
                 Obx(() {
                   final ctrl      = Get.find<ChatController>();
@@ -536,13 +525,13 @@ class MainChatScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isPlaying ? "Playing..." : "Voice Message",
+                                isPlaying ? 'playing'.tr : 'voice_message'.tr,
                                 style:
                                 TextStyle(color: Colors.white, fontSize: 13.sp),
                               ),
                               SizedBox(height: 2.h),
                               Text(
-                                isPlaying ? "Tap to stop" : "Tap to play",
+                                isPlaying ? 'tap_to_stop'.tr : 'tap_to_play'.tr,
                                 style: TextStyle(
                                     color: Colors.white70, fontSize: 11.sp),
                               ),
@@ -573,7 +562,7 @@ class MainChatScreen extends StatelessWidget {
     );
   }
 
-  // ── AI bubble  (unchanged) ────────────────────────
+  // ── AI bubble ────────────────────────────────────
   Widget _buildAiBubble(ChatMessage msg, AppColors colors) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h, right: 60.w),
@@ -616,7 +605,7 @@ class MainChatScreen extends StatelessWidget {
     );
   }
 
-  // ── Typing indicator  (unchanged) ─────────────────
+  // ── Typing indicator ─────────────────────────────
   Widget _buildTypingIndicator(AppColors colors) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h, right: 60.w),
@@ -646,13 +635,13 @@ class MainChatScreen extends StatelessWidget {
   }
 
   // ════════════════════════════════════════════════════
-  //  BOTTOM BAR  ✅ FIXED — added audio preview strip
+  //  BOTTOM BAR
   // ════════════════════════════════════════════════════
   Widget _buildBottomBar(AppColors colors, ChatController controller) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Image preview  (unchanged) ───────────────
+        // ── Image preview ────────────────────────────
         GetBuilder<ChatController>(
           builder: (ctrl) {
             if (ctrl.selectedImage == null) return const SizedBox.shrink();
@@ -667,7 +656,7 @@ class MainChatScreen extends StatelessWidget {
                         height: 50.h, width: 50.w, fit: BoxFit.cover),
                   ),
                   SizedBox(width: 8.w),
-                  Text("Image ready",
+                  Text('image_ready'.tr,
                       style: TextStyle(fontSize: 12.sp, color: Colors.grey)),
                   const Spacer(),
                   GestureDetector(
@@ -683,8 +672,7 @@ class MainChatScreen extends StatelessWidget {
           },
         ),
 
-        // ✅ NEW — Audio preview strip
-        // Shows when a recording has been made and is ready to send.
+        // ── Audio preview strip ──────────────────────
         GetBuilder<ChatController>(
           builder: (ctrl) {
             if (ctrl.selectedAudio == null) return const SizedBox.shrink();
@@ -706,12 +694,12 @@ class MainChatScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Voice message ready",
+                        Text('voice_ready'.tr,
                             style: TextStyle(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xff2F3E5B))),
-                        Text("Tap send to upload",
+                        Text('tap_send_upload'.tr,
                             style: TextStyle(fontSize: 11.sp, color: Colors.grey)),
                       ],
                     ),
@@ -735,7 +723,6 @@ class MainChatScreen extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           child: Row(
             children: [
-              // ✅ FIXED — mic button shows pulse animation while recording
               Obx(() {
                 final recording = controller.isRecording.value;
                 return GestureDetector(
@@ -770,7 +757,7 @@ class MainChatScreen extends StatelessWidget {
                     onSubmitted: (_) => controller.sendMessage(),
                     decoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: "write here...",
+                      hintText: 'Ask anything'.tr,
                       hintStyle: TextStyle(
                           color: Colors.white.withOpacity(0.55), fontSize: 14.sp),
                       isDense: true,
@@ -821,7 +808,7 @@ class MainChatScreen extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════
-//  ✅ NEW — PULSING MIC ICON (shown while recording)
+//  PULSING MIC ICON
 // ══════════════════════════════════════════════════════════
 class _PulsingMicIcon extends StatefulWidget {
   final double size;
@@ -868,7 +855,7 @@ class _PulsingMicIconState extends State<_PulsingMicIcon>
 }
 
 // ══════════════════════════════════════════════════════════
-//  SESSION TILE  (unchanged)
+//  SESSION TILE
 // ══════════════════════════════════════════════════════════
 class _SessionTile extends StatelessWidget {
   final ChatSession session;
@@ -933,7 +920,7 @@ class _SessionTile extends StatelessWidget {
               ),
             ),
             title: Text(
-              session.title ?? "Chat #${session.id}",
+              session.title ?? "${'chat_hash'.tr}${session.id}",
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -959,7 +946,7 @@ class _SessionTile extends StatelessWidget {
                     children: [
                       Icon(Icons.edit_outlined, size: 16.sp, color: Colors.black54),
                       SizedBox(width: 8.w),
-                      const Text("Rename"),
+                      Text('rename'.tr),
                     ],
                   ),
                 ),
@@ -969,7 +956,7 @@ class _SessionTile extends StatelessWidget {
                     children: [
                       Icon(Icons.delete_outline, size: 16.sp, color: Colors.red),
                       SizedBox(width: 8.w),
-                      const Text("Delete", style: TextStyle(color: Colors.red)),
+                      Text('delete'.tr, style: const TextStyle(color: Colors.red)),
                     ],
                   ),
                 ),
@@ -987,7 +974,7 @@ class _SessionTile extends StatelessWidget {
       final dt  = DateTime.parse(iso).toLocal();
       final now = DateTime.now();
       if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
-        return "Today";
+        return 'today'.tr;
       }
       const months = [
         '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -1001,7 +988,7 @@ class _SessionTile extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════
-//  ANIMATED SPARKLE  (unchanged)
+//  ANIMATED SPARKLE
 // ══════════════════════════════════════════════════════════
 class _AnimatedSparkle extends StatefulWidget {
   final _SparkleData data;
@@ -1052,7 +1039,7 @@ class _AnimatedSparkleState extends State<_AnimatedSparkle>
 }
 
 // ══════════════════════════════════════════════════════════
-//  TYPING DOTS  (unchanged)
+//  TYPING DOTS
 // ══════════════════════════════════════════════════════════
 class _TypingDots extends StatefulWidget {
   const _TypingDots();
@@ -1112,7 +1099,7 @@ class _TypingDotsState extends State<_TypingDots>
 }
 
 // ══════════════════════════════════════════════════════════
-//  SPARKLE PAINTER  (unchanged)
+//  SPARKLE PAINTER
 // ══════════════════════════════════════════════════════════
 class _Sparkle extends StatelessWidget {
   final double size;
@@ -1154,7 +1141,7 @@ class _SparklePainter extends CustomPainter {
 }
 
 // ══════════════════════════════════════════════════════════
-//  DATA CLASS  (unchanged)
+//  DATA CLASS
 // ══════════════════════════════════════════════════════════
 class _SparkleData {
   final double dx, dy;

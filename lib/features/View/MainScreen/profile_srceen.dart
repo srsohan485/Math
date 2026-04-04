@@ -12,7 +12,6 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Get.find — controller must be registered in binding or before this screen
     final controller = Get.put(ProfileController());
     final c = AppColors.instance;
 
@@ -28,7 +27,7 @@ class ProfileScreen extends StatelessWidget {
               color: c.titleTextColor, size: 20.sp),
         ),
         title: Text(
-          AppStrings.profile,
+          'Profile'.tr,
           style: TextStyle(
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
@@ -52,7 +51,6 @@ class ProfileScreen extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Row(
                 children: [
-                  // Avatar
                   CircleAvatar(
                     radius: 26.r,
                     backgroundImage:
@@ -63,8 +61,6 @@ class ProfileScreen extends StatelessWidget {
                     backgroundColor: c.border,
                   ),
                   SizedBox(width: 12.w),
-
-                  // ✅ FIX: use controller.username.value, NOT AppStrings.name
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,8 +88,6 @@ class ProfileScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  // 3-dot menu
                   _ThreeDotMenu(colors: c, controller: controller),
                 ],
               ),
@@ -105,7 +99,7 @@ class ProfileScreen extends StatelessWidget {
             // ── Menu items ────────────────────────────────
             _ProfileMenuItem(
               icon: Icons.shield_outlined,
-              label: AppStrings.termsconditiontext,
+              label: 'Terms and privacy policy'.tr,
               colors: c,
               onTap: () => Navigator.push(
                 context,
@@ -125,7 +119,7 @@ class ProfileScreen extends StatelessWidget {
 
             Obx(() => _ProfileMenuItem(
               icon: Icons.logout_rounded,
-              label: AppStrings.Logout,
+              label: 'Log out'.tr,
               colors: c,
               onTap: () => _showLogoutDialog(context, c, controller),
               showArrow: false,
@@ -144,17 +138,17 @@ class ProfileScreen extends StatelessWidget {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.r)),
-        title: Text(AppStrings.Logout,
+        title: Text('Log out'.tr,
             style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
                 color: c.titleTextColor)),
-        content: Text('Are you sure you want to log out?',
+        content: Text('logout_confirm'.tr,
             style: TextStyle(fontSize: 13.sp, color: c.hintTextColor)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
+            child: Text('cancel'.tr,
                 style: TextStyle(color: c.hintTextColor, fontSize: 13.sp)),
           ),
           Obx(() => TextButton(
@@ -171,7 +165,7 @@ class ProfileScreen extends StatelessWidget {
               child: CircularProgressIndicator(
                   strokeWidth: 2, color: c.error),
             )
-                : Text(AppStrings.Logout,
+                : Text('Log out'.tr,
                 style: TextStyle(
                     color: c.error,
                     fontSize: 13.sp,
@@ -195,8 +189,8 @@ class _ThreeDotMenu extends StatelessWidget {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_horiz_rounded,
           color: colors.titleTextColor, size: 22.sp),
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r)),
+      shape:
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       color: colors.softMintBackground,
       elevation: 4,
       onSelected: (value) {
@@ -214,7 +208,7 @@ class _ThreeDotMenu extends StatelessWidget {
               Icon(Icons.edit_outlined,
                   size: 18.sp, color: colors.titleTextColor),
               SizedBox(width: 8.w),
-              Text(AppStrings.edit,
+              Text('Edit'.tr,
                   style: TextStyle(
                       fontSize: 14.sp, color: colors.titleTextColor)),
             ],
@@ -227,7 +221,7 @@ class _ThreeDotMenu extends StatelessWidget {
               Icon(Icons.delete_outline_rounded,
                   size: 18.sp, color: colors.error),
               SizedBox(width: 8.w),
-              Text(AppStrings.deletetext,
+              Text('Delete account'.tr,
                   style: TextStyle(fontSize: 14.sp, color: colors.error)),
             ],
           ),
@@ -237,7 +231,6 @@ class _ThreeDotMenu extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
-    // ✅ Pre-fill with current username from controller
     final ctrl = TextEditingController(text: controller.username.value);
 
     showDialog(
@@ -252,7 +245,7 @@ class _ThreeDotMenu extends StatelessWidget {
               Icon(Icons.edit_outlined,
                   size: 18.sp, color: colors.titleTextColor),
               SizedBox(width: 6.w),
-              Text(AppStrings.edit,
+              Text('Edit'.tr,
                   style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
@@ -275,7 +268,7 @@ class _ThreeDotMenu extends StatelessWidget {
           controller: ctrl,
           style: TextStyle(fontSize: 14.sp, color: colors.titleTextColor),
           decoration: InputDecoration(
-            hintText: 'Enter new username',
+            hintText: 'edit_username_hint'.tr,
             hintStyle:
             TextStyle(color: colors.hintTextColor, fontSize: 14.sp),
             enabledBorder: UnderlineInputBorder(
@@ -288,7 +281,6 @@ class _ThreeDotMenu extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: Obx(() => ElevatedButton(
-              // ✅ calls controller.updateUsername — handles API + storage + Obx rebuild
               onPressed: controller.isUpdating.value
                   ? null
                   : () => controller.updateUsername(ctrl.text),
@@ -304,7 +296,7 @@ class _ThreeDotMenu extends StatelessWidget {
                 child: CircularProgressIndicator(
                     strokeWidth: 2, color: colors.btnTextColor),
               )
-                  : Text('Save',
+                  : Text('save'.tr,
                   style: TextStyle(
                       fontSize: 14.sp,
                       color: colors.btnTextColor,
@@ -322,18 +314,17 @@ class _ThreeDotMenu extends StatelessWidget {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.r)),
-        title: Text('Delete Account',
+        title: Text('Delete account'.tr,
             style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
                 color: colors.titleTextColor)),
-        content: Text(
-            'Are you sure you want to delete your account? This action cannot be undone.',
+        content: Text('delete_account_confirm'.tr,
             style: TextStyle(fontSize: 13.sp, color: colors.hintTextColor)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
+            child: Text('cancel'.tr,
                 style:
                 TextStyle(color: colors.hintTextColor, fontSize: 13.sp)),
           ),
@@ -351,7 +342,7 @@ class _ThreeDotMenu extends StatelessWidget {
               child: CircularProgressIndicator(
                   strokeWidth: 2, color: colors.error),
             )
-                : Text('Delete',
+                : Text('delete'.tr,
                 style: TextStyle(
                     color: colors.error,
                     fontSize: 13.sp,
